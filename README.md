@@ -22,33 +22,31 @@ https://sparql-support.dbcls.jp/endpoint-browser.html
     $ npm run build
 
 ## togostanza
-* download binary from [ts release](https://github.com/togostanza/ts/releases)
-* set a path to 'ts' file
+download binary from [ts release](https://github.com/togostanza/ts/releases)
+set a path to 'ts' file
 
     $ curl -O https://github.com/togostanza/ts/releases/download/v0.0.19/ts_0.0.19_linux_amd64.tar.gz
     $ tar zxvf ts_0.0.19_linux_amd64.tar.gz
     $ [set a path]
     
 ## endpoint browser
-* move files
+move files
 
     $ mv src/sparqlist/endpoint_browser_links.md sparqlist/repository/
     $ mv src/html sparqlist/public/
 
-* start SPARQList
+start SPARQList
 
     $ PORT=3000 ADMIN_PASSWORD=changeme npm start
 
-* start ts
+start ts
 
     $ cd ts
     $ ts server
 
-* access
-
-http://localhost:3000/html/
+access http://localhost:3000/html/
 
 ### change port
-* ts/endpoint-browser/_header.html:2 src="//localhost:3000/html/endpoint-browser.js"
-* sparqlist/public/html/index.html:7 href="//localhost:8080/stanza/endpoint-browser/"
-* sparqlist/public/html/endpoint-browser.js:11 api: "//localhost:3000/api/"
+    ts/endpoint-browser/_header.html:2 src="//localhost:3000/html/endpoint-browser.js"
+    sparqlist/public/html/index.html:7 href="//localhost:8080/stanza/endpoint-browser/"
+    sparqlist/public/html/endpoint-browser.js:11 api: "//localhost:3000/api/"
