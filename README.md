@@ -23,8 +23,7 @@ v12.x by [nodebre](https://github.com/hokaccha/nodebrew)
     $ cd ..
 
 ## togostanza
-download binary from [ts release](https://github.com/togostanza/ts/releases)
-set a path to 'ts' file
+download binary from [ts release](https://github.com/togostanza/ts/releases) and set a path to 'ts' file
 
     $ curl -O https://github.com/togostanza/ts/releases/download/v0.0.19/ts_0.0.19_linux_amd64.tar.gz
     $ tar zxvf ts_0.0.19_linux_amd64.tar.gz
