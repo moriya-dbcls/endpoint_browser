@@ -20,6 +20,7 @@ v12.x by [nodebre](https://github.com/hokaccha/nodebrew)
     $ cd sparqlist
     $ npm install
     $ npm run build
+    $ cd ..
 
 ## togostanza
 download binary from [ts release](https://github.com/togostanza/ts/releases)
@@ -37,12 +38,14 @@ set a path to 'ts' file
 
 #### start SPARQList
 
-    $ PORT=3000 ADMIN_PASSWORD=changeme npm start
-
+    $ cd sparqlist
+    $ PORT=3000 ADMIN_PASSWORD=changeme npm start &
+    $ cd ..
+    
 #### start ts
 
     $ cd ts
-    $ ts server
+    $ ts server &
 
 #### start endpoint browser
 http://localhost:3000/html/
