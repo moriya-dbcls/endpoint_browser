@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.0.4
+// version: 0.0.5
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.0.4",
+    version: "0.0.5",
     api: "//sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
     debug: false,
@@ -1531,7 +1531,7 @@ var epBrowser = epBrowser || {
 	    }
 	    let edge_key = source + "_" + target + "_" + json[i].p.value;
 	    
-	    if(!(obj.type.match(/typed-literal/) || (json[i].o_sample.datatype && json[i].o_sample.datatype.match(/string/)))
+	    if(!(obj.type.match(/literal/) || (json[i].o_sample.datatype && json[i].o_sample.datatype.match(/string/)))
 	       && obj.predicate != epBrowser.rdfType && nodeKey2id[obj.key] != undefined){ // don't add same instance
 		if(inverse) source = nodeKey2id[obj.key];
 		else target = nodeKey2id[obj.key];
