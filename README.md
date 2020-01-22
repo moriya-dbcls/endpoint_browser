@@ -6,15 +6,15 @@ https://sparql-support.dbcls.jp/endpoint-browser.html
     $ cd endpoint_browser
     
 ## SPARQlist
-### Node.js
-* v12.x by [nodebre](https://github.com/hokaccha/nodebrew)
+#### Node.js
+v12.x by [nodebre](https://github.com/hokaccha/nodebrew)
 
     $ curl -L git.io/nodebrew | perl - setup
     $ export PATH=$HOME/.nodebrew/current/bin:$PATH
     $ nodebrew install v12
     $ nodebrew use v12
     
-### SPARQlist
+#### SPARQlist
 
     $ git clone https://github.com/dbcls/sparqlist.git
     $ cd sparqlist
@@ -30,21 +30,22 @@ set a path to 'ts' file
     $ [set a path]
     
 ## endpoint browser
-move files
+#### move files
 
     $ mv src/sparqlist/endpoint_browser_links.md sparqlist/repository/
     $ mv src/html sparqlist/public/
 
-start SPARQList
+#### start SPARQList
 
     $ PORT=3000 ADMIN_PASSWORD=changeme npm start
 
-start ts
+#### start ts
 
     $ cd ts
     $ ts server
 
-access http://localhost:3000/html/
+#### start endpoint browser
+http://localhost:3000/html/
 
 ### change port
     ts/endpoint-browser/_header.html:2 src="//localhost:3000/html/endpoint-browser.js"
