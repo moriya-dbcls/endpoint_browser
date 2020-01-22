@@ -1654,7 +1654,7 @@ var epBrowser = epBrowser || {
     uriToShort: function(uri, sparql){
 	let f = 0;
 	let prefix = "";
-	let [ , prefix_uri, postfix]  = uri.match(/(.+[\/#:])([^\/#:]+)$/);
+	let [ , prefix_uri, postfix]  = uri.match(/(.+[\/#:])([^\/#:]*)$/);
 	if(!uri.match(/^urn:/)){
 	    for(key of Object.keys(epBrowser.prefix)){
 		if(uri.match(epBrowser.prefix[key]) && prefix_uri == epBrowser.prefix[key]){
