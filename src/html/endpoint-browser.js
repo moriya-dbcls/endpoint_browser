@@ -8,7 +8,7 @@
 
 var epBrowser = epBrowser || {
     version: "0.0.5",
-    api: "//sparql-support.dbcls.jp/rest/api/",
+    api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     debug: false,
     clickableFlag: true,

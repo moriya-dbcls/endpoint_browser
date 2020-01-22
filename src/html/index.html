@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>SPARQL support: Endpoint browser</title>
+    <script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@1.3.0/webcomponents-loader.js" crossorigin></script>
+    <link rel="import" href="//localhost:8080/stanza/endpoint-browser/">
+    <style type="text/css">
+      /* 'FontAwesome' https://weloveiconfonts.com/ */
+      @import url(https://weloveiconfonts.com/api/?family=fontawesome);
+      [class*="fontawesome-"]:before {
+      font-family: 'FontAwesome', sans-serif;
+      }
+      
+      body {
+      padding: 0px 0px 0px 0px;
+      margin: 0px 0px 0px 0px ;
+      font-family: "Hiragino Kaku Gothic ProN", Meiryo, Osaka, sans-serif;
+      }
+      div#head{
+      color: #ffffff;
+      background-color: #86b9d9;
+      margin: 0px 0px 0px 0px;
+      margin-top: 0px;
+      width: 100%;
+      height: 80px;
+      }
+      img#logo{
+      position: relative;
+      top: 20px;
+      float:left;
+      margin:0px 20px 0px 20px;
+      }
+      div#header_r{
+      float: right;
+      text-align: right;
+      margin-right: 0px;
+      }
+      img#poweredbydbcls{
+      margin-top: 12px;
+      }
+      div#main {
+      margin-top: 20px;
+      }
+      h1 {
+      font-size: 24px;
+      margin: 0px;
+      padding: 40px 20px 0px 20px;
+      }
+      h2 {
+      font-size: 20px;
+      color: #555555;
+      }
+      h3 {
+      margin-left:20px;
+      font-size: 16px;
+      color: #555555;
+      }
+      a {
+      color: #4886ad;
+      }
+      .ml50 {
+      margin-left: 50px;
+      }
+      .ml100 {
+      margin-left: 100px;
+      }
+      pre {
+      margin: 0px 70px 0px 70px;
+      padding: 10px 30px 10px 30px;
+      font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+      font-size: 14px;
+      }
+      div#main {
+	  width: 100%;
+      }
+      div#content {
+      width: 90%;   
+      margin: 0 auto;  
+      }
+      div#start {
+	  text-align: center;
+      }
+      div.link {
+      margin-top: 40px;
+      margin-bottom: 16px;
+      }
+      form#form {
+      margin-top: 50px;
+      }
+      textarea#query {
+      width: 100%;
+      height: 400px;
+      }
+      input.button {
+      font-size: 20px;
+      margin-bottom: 20px;
+      cursor:pointer;
+      }
+      #dbcls-common-header nav.gnav {
+      margin: 0;
+      }
+      #popupCopy {
+      display: none;
+      margin-left:10px;
+      }
+      #copyIcon {
+      font-size:20px;
+      display:inline;
+      margin-left:100px;
+      cursor:pointer;
+      }
+      #fileIcon {
+      font-size:20px;
+      display:none;
+      margin-left:200px;
+      }
+      .bottom_line {
+      border-bottom: solid #cccccc 2px;
+      }
+      ul {
+	  list-style-type: none;
+	  padding: 0px;
+	  margin-top: 50px;
+      }
+      li {
+	  font-size: 14px;
+	  margin-top: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="head">
+     <a href="./sparql-support.html" id="logolink"><img src="//sparql-support.dbcls.jp/file/logo.png" width="70" height="70" id="logo"></a> 
+     <h1>Endpoint browser <span style="color:#ffcccc">alpha</dev></h1>
+    </div>
+    <div id="main">
+
+      <div id="content">
+	<div id="stanza"></div>
+	<div id="start">
+	  <ul>
+	    <li>endpoint<br><input type="text" size="100" id="endpoint"></li>
+	    <li>entry<br> <input type="text" size="100" id="entry"></li>
+	    <li><span style="color: #4886ad; cursor: pointer; font-size: 12px;" onclick="switchOption();">&lt;option&gt;</span><span id="options" style="display:none;font-size: 12px;"> limit of edge type: <input type="text" id="limit" size="5" value="50">, <input type="checkbox" id="inv" value="1"> start from inverse-edge</span></li>
+	  </ul>
+	  <input type="button" value="start" onclick="startSparqlSupportGui();">
+	  <br>
+	  <p style="color: #4886ad; cursor: pointer; font-size: 12px;" onclick="setSample(1);">sample (togogenome)</p>
+	  <p style="color: #4886ad; cursor: pointer; font-size: 12px;" onclick="setSample(2);">sample (jPOST)</p>
+	  <p style="color: #4886ad; cursor: pointer; font-size: 12px;" onclick="setSample(3);">sample (RefEx)</p>
+	</div>
+	
+	<div class="link" id="foot">
+	  <p style="margin-left: 20px;">
+	    <a href="./sparql-support.html#endpoint_browser" id="reflink">about Endpoint browser</a> |
+	    <a href="./">SPARQL support</a>
+	  </p>
+	  <p style="margin-left: 20px;font-size: 14px;">© 2019 <a href="https://dbcls.rois.ac.jp/">DBCLS</a>.</p>
+	</div>
+      </div>
+    </div>
+    
+    <script language="javascript">
+    <!--
+
+      function startSparqlSupportGui(){
+	  let endpoint = document.getElementById("endpoint").value;
+	  let entry = document.getElementById("entry").value;
+	  if(entry && endpoint.match(/^https*:\/\//)){
+	      let limit = document.getElementById("limit").value;
+	      let inv = document.getElementById("inv").checked;
+	      if(!entry.match(/^https*:\/\/.+/)) inv = true;
+	      let stanzaDiv = document.getElementById("stanza");
+	      document.getElementById("start").style.display = "none";
+	      let stanza =  document.createElement('togostanza-endpoint-browser');
+	      stanza.setAttribute("endpoint", endpoint);
+	      stanza.setAttribute("entry", entry);
+	      if(limit.match(/^\d+/)) stanza.setAttribute("limit", limit);
+	      if(inv) stanza.setAttribute("inv", 1);
+	      stanzaDiv.appendChild(stanza);
+	  }
+      }
+
+      function setSample(f){
+	  if(f == 1){
+	      document.getElementById("endpoint").value = "http://dev.togogenome.org/sparql";
+	      document.getElementById("entry").value = "http://togogenome.org/gene/9606:BRCA1";
+	  }else if(f == 2){
+	      document.getElementById("endpoint").value = "https://db-dev.jpostdb.org/proxy/sparql";
+	      document.getElementById("entry").value = "http://rdf.jpostdb.org/entry/PRT206_1_Q9NYF8";
+	  }else{
+	      document.getElementById("endpoint").value = "https://integbio.jp/rdf/sparql";
+	      document.getElementById("entry").value = "http://refex.dbcls.jp/entry/RFX0000569780";
+	  }
+      }
+
+      function switchOption(){
+	  console.log(1);
+	  let opt = document.getElementById("options");
+	  if(opt.style.display == "none") opt.style.display = "inline";
+	  else opt.style.display = "none";
+      }
+
+      if(window.navigator.languages && window.navigator.languages[0] == "ja"){
+	  document.getElementById("reflink").href = "./sparql-support_j.html#endpoint_browser";
+	  document.getElementById("logolink").href = "./sparql-support_j.html";
+      }
+-->
+    </script>
+
+    <script type="text/javascript" src="https://dbcls.rois.ac.jp/DBCLS-common-header-footer/common-header/script/common-header.js" style="display: block" id="common-header__script"></script>
+    <style>
+#dbcls-common-header nav.gnav {
+     margin-left: 30px;
+}
+    </style>
+      
+  </body>
+</html>
