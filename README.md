@@ -10,7 +10,7 @@
 v12.x by [nodebre](https://github.com/hokaccha/nodebrew)
 
     $ curl -L git.io/nodebrew | perl - setup
-    $ export PATH=$HOME/.nodebrew/current/bin:$PATH
+    [set a path to .nodebrew/current/bin, e.g. $ export PATH=$HOME/.nodebrew/current/bin:$PATH]
     $ nodebrew install v12
     $ nodebrew use v12
     
@@ -27,7 +27,7 @@ download binary from [ts release](https://github.com/togostanza/ts/releases) and
 
     $ curl -O https://github.com/togostanza/ts/releases/download/v0.0.19/ts_0.0.19_linux_amd64.tar.gz
     $ tar zxvf ts_0.0.19_linux_amd64.tar.gz
-    $ [set a path]
+    [set a path to 'ts']
     
 ### endpoint browser
 #### move files
