@@ -49,7 +49,9 @@ download binary from [ts release](https://github.com/togostanza/ts/releases) and
 #### start endpoint browser
 http://localhost:3000/html/
 
-## change ports
+## hoge
+hard-coded port num and directory name 
+
     ts/endpoint-browser/_header.html:2 src="//localhost:3000/html/endpoint-browser.js"
     sparqlist/public/html/index.html:7 href="//localhost:8080/stanza/endpoint-browser/"
     sparqlist/public/html/endpoint-browser.js:11 api: "//localhost:3000/api/"
