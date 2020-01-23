@@ -100,6 +100,19 @@ LIMIT {{limit}}
   let type_p = {type: "uri", value: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"};
   let type_o_count = {type: "typed-literal", datatype: "http://www.w3.org/2001/XMLSchema#integer", value: "1"};
   let json = types.results.bindings;
+
+  /////// to unique class label (pref lang = "en")
+  let type_uniq = {};
+  for(elm of json){
+    if(type_uniq[elm.o.value] && elm.o_label["xml:lang"] && elm.o_label["xml:lang"] == "en") type_uniq[elm.o.value] = elm;
+    else if(!type_uniq[elm.o.value]) type_uniq[elm.o.value] = elm;  
+  }
+  json = [];
+  for(key of Object.keys(type_uniq)){
+    json.push(type_uniq[key]);
+  }
+  ////////
+
   for(elm of json){
     let obj = {s: elm.s, p: type_p, o_sample: elm.o, c: elm.o, o_count: type_o_count};
     if(elm.o_label) obj['c_label'] = elm.o_label;
