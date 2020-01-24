@@ -133,18 +133,22 @@ var epBrowser = epBrowser || {
 	svg.append("g").attr("id", "prefix_g");
 	svg.append("g").attr("id", "outer_ep_g");
 	////// arrow marker
-	let marker = svg.append("defs").append("marker")
-	    .attr('id', "arrowhead")
-	    .attr('refX', 3.1)
-	    .attr('refY', 2)
-	    .attr('markerWidth', 8)
-	    .attr('markerHeight', 4)
-	    .attr("markerUnits", "strokeWidth")
-	    .attr('orient', "auto");
-	marker.append("path")
-	    .attr("class", "arrow")
-	    .attr("d", "M 0,0 V 4 L4,2 Z")
-	    .attr("fill", "black");
+	let edge_colors = ["cccccc", "aaaaaa", "888888", "666666", "444444", "de2c47"];
+	let defs = svg.append("defs");
+	for(color of edge_colors){
+	    defs.append("marker")
+		.attr('id', "arrowhead_" + color)
+		.attr('refX', 3.1)
+		.attr('refY', 2)
+		.attr('markerWidth', 8)
+		.attr('markerHeight', 4)
+		.attr("markerUnits", "strokeWidth")
+		.attr('orient', "auto")
+		.append("path")
+		.attr("class", "arrow")
+		.attr("d", "M 0,0 V 4 L4,2 Z")
+		.attr("fill", "#" + color);
+	}
 	//// SPARQL query DOM
 	let sparqlDiv = renderDiv.append("div").attr("id", "sparql_run_div").style("display", "none");
 	sparqlDiv.append("pre").attr("id", "query_dummy")
@@ -321,7 +325,7 @@ var epBrowser = epBrowser || {
 		return d.color; })
 	    .attr("stroke-width", 3)
 	    .attr("fill", "none")
-	    .attr("marker-end", "url(#arrowhead)")
+	    .attr("marker-end", function(d){ return "url(#arrowhead_" + d.color.replace("#", "") + ")"; })
 	    .on("mouseover", function(d){
 		let text = "";
 		if(epBrowser.labelFlag == true) text = d.predicate_label;
@@ -804,9 +808,10 @@ var epBrowser = epBrowser || {
 	//// raw query
 	renderDiv.selectAll(".edge")
 	    .attr("stroke", function(d){
-		if(p_ids[d.id]) d.color = "#e6494c";
+		if(p_ids[d.id]) d.color = "#de2c47";
 		else d.color = epBrowser.edgeColor(d.count);
-		return d.color;});
+		return d.color;})
+	    .attr("marker-end", function(d){ return "url(#arrowhead_" + d.color.replace("#", "") + ")"; });
 	let query = "# @endpoint " + epBrowser.endpoint + "\n";
 	let html = "# @endpoint " + epBrowser.endpoint + "\n";
 	let keys = Object.keys(epBrowser.queryPrefix);
@@ -1052,16 +1057,17 @@ var epBrowser = epBrowser || {
 			if(d.child){
 			    let childs = svg.selectAll(".parent_" + d.id);
 			    childs.selectAll("rect").attr("stroke-width", "3px").attr("stroke", "#de2c47");
-			    childs.selectAll("path").attr("stroke", "#de2c47");
+			    childs.selectAll("path").attr("stroke", "#de2c47").attr("marker-end", "url(#arrowhead_de2c47)");
 			}else{
 			    if(d.id > 0){
 				d3.select(this).select("rect").attr("stroke-width", "3px").attr("stroke", "#de2c47");
-				svg.select("#edge_" + d.predicate_id).attr("stroke", "#de2c47");
+				svg.select("#edge_" + d.predicate_id).attr("stroke", "#de2c47").attr("marker-end", "url(#arrowhead_de2c47)");
 			    }
 			} })
 		    .on("mouseout", function(){
 			svg.selectAll(".node").attr("stroke-width", "1px").attr("stroke", "black");
-			svg.selectAll(".edge").attr("stroke", function(d){return epBrowser.edgeColor(d.count); }) })
+			svg.selectAll(".edge").attr("stroke", function(d){return epBrowser.edgeColor(d.count); })
+			    .attr("marker-end", function(d){ return "url(#arrowhead_" + d.color.replace("#", "") + ")"; }) })
 		    .style("cursor", "pointer");
 	    }
 	    changeModeSwitchColor(g, true);
