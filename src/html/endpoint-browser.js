@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.0.5
+// version: 0.0.6
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.0.5",
+    version: "0.0.6",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     debug: false,
@@ -125,7 +125,7 @@ var epBrowser = epBrowser || {
 	let nodes_layer = g.append('g').attr("class", "nodes_layer");
 	let pop_edge_label = g.append('text')
 	    .attr("id", "popup_label")
-	    .attr("fill", "#1680c4")
+	    .attr("fill", "#ff4d7f")
 	    .attr("font-size", "12px")
 	    .attr("font-family", "sans-serif");
 	epBrowser.makeButton(renderDiv, param);
@@ -278,25 +278,28 @@ var epBrowser = epBrowser || {
 	edge_g = edge_g
 	    .enter()
 	    .append("g")
-	    .attr("class", function(d){ let tmp = "edge_g";
-					if(d.parent[0] != undefined) tmp += " parent_" + d.parent.join(" parent_");
-					return tmp;})
+	    .attr("class", function(d){
+		let tmp = "edge_g";
+		if(d.parent[0] != undefined) tmp += " parent_" + d.parent.join(" parent_");
+		return tmp;})
 	    .attr("id", function(d){ return "edge_g_id_" + d.id; })
 	    .merge(edge_g);
 	edge_label_g = edge_label_g
 	    .enter()
 	    .append("g")
-	    .attr("class", function(d){ let tmp = "edge_label_g";
-					if(d.parent[0] != undefined) tmp += " parent_" + d.parent.join(" parent_");
-					return tmp;})
+	    .attr("class", function(d){
+		let tmp = "edge_label_g";
+		if(d.parent[0] != undefined) tmp += " parent_" + d.parent.join(" parent_");
+		return tmp;})
 	    .attr("id", function(d){ return "edge_label_g_id_" + d.id; })
 	    .merge(edge_label_g);
 	node_g = node_g
 	    .enter()
 	    .append("g")
-	    .attr("class", function(d){ let tmp = "node_g";
-					if(d.parent[0] != undefined) tmp += " parent_" + d.parent.join(" parent_");
-					return tmp;})
+	    .attr("class", function(d){
+		let tmp = "node_g";
+		if(d.parent[0] != undefined) tmp += " parent_" + d.parent.join(" parent_");
+		return tmp;})
 	    .attr("id", function(d){ return "node_g_id_" + d.id; })
 	    .call(d3.drag()
 		  .on("start", dragstarted)
@@ -320,14 +323,16 @@ var epBrowser = epBrowser || {
 	    .attr("fill", "none")
 	    .attr("marker-end", "url(#arrowhead)")
 	    .on("mouseover", function(d){
-		if(epBrowser.labelFlag == true){
-		    svg.select("#popup_label")
-			.attr("x", d3.mouse(this)[0] + 15)
-			.attr("y", d3.mouse(this)[1] - 10)
-			.text(d.predicate_label)
-			.style("display", "block");
-		} })
-	    .on("mouseout", function(d){ if(epBrowser.labelFlag == true) svg.select("#popup_label").style("display", "none"); });
+		let text = "";
+		if(epBrowser.labelFlag == true) text = d.predicate_label;
+		else text = "count: " + d.count;
+		svg.select("#popup_label")
+		    .attr("x", d3.mouse(this)[0] + 15)
+		    .attr("y", d3.mouse(this)[1] - 10)
+		    .text(text)
+		    .style("display", "block");
+	    })
+	    .on("mouseout", function(d){ svg.select("#popup_label").style("display", "none"); });
 
 	// edge label
 	let edge_label = edge_label_g.append("text")
