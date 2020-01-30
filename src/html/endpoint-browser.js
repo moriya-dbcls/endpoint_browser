@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.0.6
+// version: 0.0.7
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,8 +7,8 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.0.6",
-    api: "//localhost:3000/api/",
+    version: "0.0.7",
+    api: "//sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
     debug: false,
     clickableFlag: true,
@@ -75,7 +75,9 @@ var epBrowser = epBrowser || {
 	    let f = this.frame;
 	    let g = svg.select("#l" + gid);
 	    if(f == 0) g.selectAll("circle").transition().duration(240).attr("r", 8);
-	    else if(f <= 4) g.select("#" + gid + "_" + f).transition().duration(120).attr("cy", hc - 10 + 35);
+	    else if(f <= 4) g.select("#" + gid + "_" + f)
+		.transition().duration(120).attr("cy", hc - 10 + 18)
+		.transition().duration(120).attr("cy", hc - 10 + 35);
 	    else g.selectAll("circle").transition().duration(240).attr("r", 0);
 	},
 	remove: function(svg, gid){
