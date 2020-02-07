@@ -1,1 +1,219 @@
+<style>
+text {
+    font-family: sans-serif;
+}
+text#popup_label {
+    fill: #ff4d7f;
+    font-size: 12px;
+}
+
+text.edge_label {
+    fill: #1680c4;
+    font-size: 10px;
+}
+
+text.node_label {
+    fill: black;
+    font-size: 10px;
+    text-anchor: middle;
+}
+
+text.node_label_sparql {
+    font-size: 12px;
+    text-anchor: middle;
+}
+
+text.sparql_var {
+    fill: #1680c4;
+}
+
+text.sparql_const {
+    fill: #48a878;
+}
+
+text.sparql_const_literal {
+    fill: #b86f48;
+}
+
+text.sparql_path, text.sparql_blank{
+    fill: #b286bd;
+}
+
+path.arrow_a{
+    fill: #cccccc;
+}
+
+path.arrow_b{
+    fill: #aaaaaa;
+}
+
+path.arrow_c{
+    fill: #888888;
+}
+
+path.arrow_d{
+    fill: #666666;
+}
+
+pah.arrow_e{
+    fill: #444444;
+}
+
+path.arrow_red{
+    fill: #de2c47;
+}
+
+path.edge {
+    stroke-width: 3;
+    fill: none;
+}
+
+path.edge_a{
+    stroke: #cccccc;
+}
+
+path.edge_b{
+    stroke: #aaaaaa;
+}
+
+path.edge_c{
+    stroke: #888888;
+}
+
+path.edge_d{
+    stroke: #666666;
+}
+
+path.edge_e{
+    stroke: #444444;
+}
+
+path.edge_red{
+    stroke: #de2c47;
+}
+
+pre#query_dummy {
+    font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+    font-size:14px;
+    line-height: 20px;
+    width: 100%;
+}
+
+rect.node {
+    stroke: black;
+    stroke-width: 1px;
+    opacity: 1;
+    width: 160px;
+    height: 40px;
+    x: -80px;
+    y: -20px;
+    rx: 8px;
+    ry: 8px;
+}
+
+rect.node_class {
+    fill: #fff5bf;
+}
+
+rect.node_uri {
+    fill: #ffd29e;
+}
+
+rect.node_literal {
+    fill: #ffbeb5;
+}
+
+rect.node_bnode {
+    fill: #dddddd;
+}
+
+rect.node_class_l {
+    fill: #fffae0;
+}
+
+rect.node_uri_l {
+    fill: #ffead1;
+}
+
+rect.node_literal_l {
+    fill: #ffddd9;
+}
+
+rect.node_bnode_l {
+    fill: #f4f4f4;
+}
+
+rect.node_red {
+    stroke-width: 3px;
+    stroke: #de2c47;
+}
+
+rect.sparql_node_rect {
+    fill: white;
+    stroke-width: 3px;
+    width: 160px;
+    height: 20px;
+    x: -80px;
+    y: 24px;
+    rx: 8px;
+    ry: 8px;
+}
+
+rect.hover {
+    stroke: #287ed4;
+    stroke-width: 3px;
+}
+
+rect.hover_inverse {
+    stroke: #9953b8;
+    stroke-width: 3px;
+}
+
+rect.hover_sparql {
+    stroke: #25b5ba;
+    stroke-width: 3px;
+}
+
+rect.sparql_var {
+    stroke: #1680c4;
+    stroke-width: 3px;
+}
+
+rect.sparql_const {
+    stroke: #48a878;
+    stroke-width: 3px;
+}
+
+rect.sparql_const_literal {
+    stroke: #b86f48;
+    stroke-width: 3px;
+}
+
+rect.sparql_path, rect.sparql_blank{
+    stroke: #b286bd;
+    stroke-width: 3px;
+}
+
+#query_dummy .sparql_var {
+    color: #1680c4;
+}
+
+#query_dummy .sparql_const, .sparql_uri {
+    color: #48a878;
+}
+
+#query_dummy .sparql_const_literal {
+    color: #b86f48;
+}
+#query_dummy .sparql_blank {
+    color: #b286bd;
+}
+#query_dummy .sparql_prefix {
+    color: #db7d25;
+}
+#query_dummy .sparql_ {
+    color: #;
+}
+</style>
+
 <div id="renderDiv"></div>

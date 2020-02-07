@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.0.7
+// version: 0.0.8
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,8 +7,8 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.0.7",
-    api: "//sparql-support.dbcls.jp/rest/api/",
+    version: "0.0.8",
+    api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     debug: false,
     clickableFlag: true,
@@ -125,40 +125,29 @@ var epBrowser = epBrowser || {
 	let edges_layer = g.append('g').attr("class", "edges_layer");
 	let edges_label_layer = g.append('g').attr("class", "edges_label_layer");
 	let nodes_layer = g.append('g').attr("class", "nodes_layer");
-	let pop_edge_label = g.append('text')
-	    .attr("id", "popup_label")
-	    .attr("fill", "#ff4d7f")
-	    .attr("font-size", "12px")
-	    .attr("font-family", "sans-serif");
+	let pop_edge_label = g.append('text').attr("id", "popup_label");
 	epBrowser.makeButton(renderDiv, param);
 	g.append("g").attr("id", "popup_control");
 	svg.append("g").attr("id", "prefix_g");
 	svg.append("g").attr("id", "outer_ep_g");
 	////// arrow marker
-	let edge_colors = ["cccccc", "aaaaaa", "888888", "666666", "444444", "de2c47"];
+	let edge_colors = ["a", "b", "c", "d", "e", "red"];
 	let defs = svg.append("defs");
 	for(color of edge_colors){
 	    defs.append("marker")
 		.attr('id', "arrowhead_" + color)
-		.attr('refX', 3.1)
-		.attr('refY', 2)
-		.attr('markerWidth', 8)
-		.attr('markerHeight', 4)
+		.attr('refX', 3.1).attr('refY', 2)
+		.attr('markerWidth', 8).attr('markerHeight', 4)
 		.attr("markerUnits", "strokeWidth")
 		.attr('orient', "auto")
 		.append("path")
-		.attr("class", "arrow")
-		.attr("d", "M 0,0 V 4 L4,2 Z")
-		.attr("fill", "#" + color);
+		.attr("class", "arrow_" + color)
+		.attr("d", "M 0,0 V 4 L4,2 Z");
 	}
 	//// SPARQL query DOM
 	let sparqlDiv = renderDiv.append("div").attr("id", "sparql_run_div").style("display", "none");
-	sparqlDiv.append("pre").attr("id", "query_dummy")
-	    .style("font-family", "Consolas, 'Courier New', Courier, Monaco, monospace")
-	    .style("font-size", "14px").style("line-height", "20px")
-	    .attr("rows", "15").style("width", "100%");
+	sparqlDiv.append("pre").attr("id", "query_dummy");
 	sparqlDiv.append("pre").attr("id", "query").style("display", "none");
-	sparqlDiv.append("pre").attr("id", "query_n");
 	sparqlDiv.append("input").attr("id", "sparql_limit").attr("type", "text").attr("size", "20").attr("value", "LIMIT 100")
 	    .style("position", "relative").style("top", "-10px");
 	sparqlDiv.append("br");
@@ -206,7 +195,7 @@ var epBrowser = epBrowser || {
 		   id: 0,
 		   layer: 0,
 		   parent: [],
-		   color: epBrowser.nodeColor(json[0].s.type, 0, false),
+		   edge_type: epBrowser.nodeColorType(json[0].s.type, 0, false),
 		   endpoint: epBrowser.endpoint,
 		   off_click: {},
 		   off_click_inv: {}
@@ -320,14 +309,12 @@ var epBrowser = epBrowser || {
 	    
 	// edge
 	let edge = edge_g.append("path")
-	    .attr("class", "edge")
 	    .attr("id", function(d){ return "edge_" + d.id; })
-	    .attr("stroke", function(d){
-		d.color = epBrowser.edgeColor(d.count);
-		return d.color; })
-	    .attr("stroke-width", 3)
-	    .attr("fill", "none")
-	    .attr("marker-end", function(d){ return "url(#arrowhead_" + d.color.replace("#", "") + ")"; })
+	    .attr("class", function(d){
+		d.edge_type = epBrowser.edgeColorType(d.count);
+		return "edge edge_" + d.edge_type;
+	    })
+	    .attr("marker-end", function(d){ return "url(#arrowhead_" + d.edge_type + ")"; })
 	    .on("mouseover", function(d){
 		let text = "";
 		if(epBrowser.labelFlag == true) text = d.predicate_label;
@@ -344,9 +331,6 @@ var epBrowser = epBrowser || {
 	let edge_label = edge_label_g.append("text")
 	    .text(function(d) { return d.predicate_label; })
 	    .attr("class", "edge_label")
-	    .attr("fill", "#1680c4")
-	    .attr("font-size", "10px")
-	    .attr("font-family", "sans-serif")
 	    .attr("text-anchor", function(){
 		if(epBrowser.nodeGridFlag) return "end";
 		else return "start";
@@ -361,13 +345,11 @@ var epBrowser = epBrowser || {
 	
 	// node
 	let rect = node_mouse_eve.append("rect")
-	    .attr("class", "node")
 	    .attr("id", function(d) { return d.id; })
-	    .attr("fill", function(d) { return epBrowser.nodeColor(d.type, d.predicate, d.endpoint); })
-	    .attr("stroke", "black")
-	    .attr("stroke-width", "1px")
-	    .attr("opacity", 1)
-	    .attr("width", 160).attr("height", 40).attr("x", -80).attr("y", -20).attr("rx", 8).attr("ry", 8);
+	    .attr("class", function(d){
+		d.node_type = epBrowser.nodeColorType(d.type, d.predicate, d.endpoint);
+		return "node node_" + d.node_type;
+	    });
 
 	// node label
 	node_mouse_eve.append("text")
@@ -382,9 +364,6 @@ var epBrowser = epBrowser || {
 	    .attr("dx", "0px")
 	    .attr("dy", function(d){ if(d.type == "uri") return "-6px";
 				     else return "4px"; })
-	    .attr("text-anchor", "middle")
-	    .attr("font-size", "10px")
-	    .attr("font-family", "sans-serif")
 	    .on("mouseover", function(d){
 		svg.select("#popup_label_" + d.id)
 		    .text(function(d) {
@@ -401,37 +380,26 @@ var epBrowser = epBrowser || {
 	    .attr("class", "node_label")
 	    .attr("dx", "0px")
 	    .attr("dy", "12px")
-	    .attr("text-anchor", "middle")
-	    .attr("font-size", "10px")
-	    .attr("font-family", "sans-serif")
 	    .on("mouseover", function(d){ svg.select("#popup_label_" + d.id).text(function(d) { return "<" + d.key + ">"; }).style("display", "block"); })
 	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); })
 	node_mouse_eve.append("text")
-	    .attr("class", "node_label")
 	    .attr("id", function(d){ return "popup_label_" + d.id; })
+	    .attr("class", "node_label")
 	    .attr("dx", "0px")
 	    .attr("dy", "32px")
-	    .attr("text-anchor", "middle")
-	    .attr("font-size", "10px")
-	    .attr("font-family", "sans-serif")
 	    .style("display", "none");
 	let popup_sparql_node_g = node_g.append("g")
-	    .attr("class", "sparql_node")
 	    .attr("id", function(d){ return "popup_sparql_node_g_" + d.id; })
+	    .attr("class", "sparql_node")
 	    .style("display", "none");
 	popup_sparql_node_g.append("rect")
-	    .attr("fill", "white")
-	    .attr("stroke-width", "3px")
-	    .attr("width", 160).attr("height", 20).attr("x", -80).attr("y", 24).attr("rx", 8).attr("ry", 8);
+	    .attr("class", "sparql_node_rect");
 	popup_sparql_node_g.append("text")
 	    .text("")
-	    .attr("class", "node_label")
+	    .attr("class", "node_label_sparql")
 	    .attr("dx", "0px")
-	    .attr("dy", "38px")
-	    .attr("text-anchor", "middle")
-	    .attr("font-size", "12px")
-	    .attr("font-family", "sans-serif");
-
+	    .attr("dy", "38px");
+	
 	// mouse event
 	let endpoint = epBrowser.endpoint;
 	if(epBrowser.outerEpFlag && epBrowser.outerEp && epBrowser.outerEp.match(/^https*:\/\//)) endpoint = epBrowser.outerEp;
@@ -488,14 +456,14 @@ var epBrowser = epBrowser || {
 	    })
 	    .on("mouseover", function(d){
 		if(epBrowser.clickableFlag){
-		    d3.select(this).select("rect").attr("stroke-width", "3px")
-                        .attr("stroke", function(){
-                            if(epBrowser.inverseFlag) return "#9953b8";
-                            else return "#287ed4";
+		    d3.select(this).select("rect")
+                        .attr("class", function(d){
+                            if(epBrowser.inverseFlag) return "node node_" + d.node_type + " hover_inverse";
+                            else return "node node_" + d.node_type + " hover";
 			})
 		} })
 	    .on("mouseout", function(){
-		d3.select(this).select("rect").attr("stroke-width", "1px").attr("stroke", "black");
+		d3.select(this).select("rect").attr("class", function(d){ return "node node_" + d.node_type; });
 	    })
 	    .style("cursor", "pointer");
 		
@@ -630,13 +598,13 @@ var epBrowser = epBrowser || {
 		    changeNodeMode(renderDiv, d, click_rect, "off");
 		}
 	    })
-	    .on("mouseover", function(){
+	    .on("mouseover", function(d){
 		let rect = d3.select(this).select("rect");
-		if(rect.attr("stroke") == "black") rect.attr("stroke", "#25b5ba").attr("stroke-width", "3px");
+		if(d.sparql_label == undefined) rect.attr("class", "node node_" + d.node_type + " hover_sparql");
 	    })
-	    .on("mouseout", function(){
+	    .on("mouseout", function(d){
 		let rect = d3.select(this).select("rect");
-		if(rect.attr("stroke") == "#25b5ba") rect.attr("stroke", "black").attr("stroke-width", "1px");
+		if(d.sparql_label == undefined) rect.attr("class", "node node_" + d.node_type);
 	    });
 
 	
@@ -654,8 +622,7 @@ var epBrowser = epBrowser || {
 	    if(value == "off"){
 		d.sparql_select = 0;
 		d.sparql_label = undefined;
-		click_rect.attr("stroke", "black")
-		    .attr("stroke-width", "1px");
+		click_rect.attr("class", "node node_" + d.node_type);
 		sparql_node_g.style("display", "none");
 	    }else{
 		d.sparql_select = 1;
@@ -663,27 +630,26 @@ var epBrowser = epBrowser || {
 		click_rect.attr("stroke-width", "3px");
 		let color = "";
 		let text = "";
+		let literal_flag = "";
 		if(value == "var"){
-		    color = "#1680c4";
 		    text = "?n" + d.id;
 		    if(d.sparql_var_name) text = d.sparql_var_name;
 		}else if(value == "const"){
-		    color = "#48a878";
-		    if(d.type.match(/literal/)){color = "#b86f48"; text = '"' + d.key + '"';}
-		    else text = "<URI> const.";	    
+		    if(d.type.match(/literal/)){
+			text = '"' + d.key + '"';
+			literal_flag = "_literal";
+		    }else text = "<URI> const.";	    
 		}else if(value == "path"){
-		    color = "#b286bd";
 		    text = "/";
 		}else if(value == "blank"){
-		    color = "#b286bd";
 		    text = "[ ]";
 		}
 
 		let id = d.id;
-		click_rect.attr("stroke", color);
+		click_rect.attr("class", "node node_" + d.node_type + " sparql_" + d.sparql_label + literal_flag);
 		sparql_node_g.style("display", "block");
-		sparql_node_g.select("rect").attr("stroke", color);
-		sparql_node_g.select("text").attr("fill", color).text(text);
+		sparql_node_g.select("rect").attr("class", "sparql_node_rect sparql_" + d.sparql_label + literal_flag);
+		sparql_node_g.select("text").attr("class", "node_label_sparql sparql_" + d.sparql_label + literal_flag).text(text);
 		sparql_node_g.select("rect").on("click", function(){
 		    if(d.sparql_label == "var"){
 			epBrowser.hideVarNameDiv(renderDiv);
@@ -807,20 +773,20 @@ var epBrowser = epBrowser || {
 	}
 	
 	// set query
-	//// raw query
 	renderDiv.selectAll(".edge")
-	    .attr("stroke", function(d){
-		if(p_ids[d.id]) d.color = "#de2c47";
-		else d.color = epBrowser.edgeColor(d.count);
-		return d.color;})
-	    .attr("marker-end", function(d){ return "url(#arrowhead_" + d.color.replace("#", "") + ")"; });
+	    .attr("class", function(d){
+		if(p_ids[d.id]) d.edge_type = "red";
+		else d.edge_type = epBrowser.edgeColorType(d.count);
+		return "edge edge_" + d.edge_type;})
+	    .attr("marker-end", function(d){ return "url(#arrowhead_" + d.edge_type + ")"; });
 	let query = "# @endpoint " + epBrowser.endpoint + "\n";
 	let html = "# @endpoint " + epBrowser.endpoint + "\n";
 	let keys = Object.keys(epBrowser.queryPrefix);
 	for(let i = 0; i < keys.length; i++){
 	    query += "PREFIX " + keys[i] + ": <" + epBrowser.prefix[keys[i]] + ">\n";
-	    html += "PREFIX <span style='color:#db7d25'>" + keys[i] + ":</span> <span style='color:#48a878'>&lt;" + epBrowser.prefix[keys[i]] + "&gt;</span>\n";
+	    html += "PREFIX <span class='sparql_prefix'>" + keys[i] + ":</span> <span class='sparql_uri'>&lt;" + epBrowser.prefix[keys[i]] + "&gt;</span>\n";
 	}
+	//// raw query
 	query += "PREFIX : <" + epBrowser.prefix[":"] + ">\n";
 	query += "SELECT DISTINCT " + Object.keys(vars).join(" ") + "\n";
 	query += "WHERE {\n";
@@ -832,12 +798,12 @@ var epBrowser = epBrowser || {
 	}
 	query += "}\n";
 	//// html format query
-	html += "PREFIX <span style='color:#db7d25'>:</span> <span style='color:#48a878'>&lt;" + epBrowser.prefix[":"] + "&gt;</span>\n";
+	html += "PREFIX <span class='sparql_prefix'>:</span> <span class='sparql_uri'>&lt;" + epBrowser.prefix[":"] + "&gt;</span>\n";
 	html += "SELECT DISTINCT <span style='color:#1680c4'>" + Object.keys(vars).join(" ") + "</span>\n";
 	html += "WHERE {\n"
 	html += mkQuery(triples, blanks, 0)[1];
 	for(endpoint in service){
-	    html += "  SERVICE  <span style='color:#48a878'>&lt;" + endpoint + "&gt;</span> {\n   ";
+	    html += "  SERVICE  <span class='sparql_uri'>&lt;" + endpoint + "&gt;</span> {\n   ";
 	    html += mkQuery(service[endpoint], blanks, 0)[1];
 	    html += "  }\n";
 	}
@@ -860,12 +826,10 @@ var epBrowser = epBrowser || {
 		q_html += indent;
 		if(triple.subjectType != "blank" ){
 		    q += triple.subject;
-		    let color = "#48a878";
-		    if(triple.subjectType == "var") color = "#1680c4";
-		    q_html += "<span style='color:" + color + "'>" + triple.subject + "</span>";
+		    q_html += "<span class='sparql_" + triple.subjectType + "'>" + triple.subject + "</span>";
 		}
 		q += " " + triple.predicates.join("/");
-		q_html += " <span style='color:#db7d25'>" + triple.predicates.join("</span>/<span style='color:#db7d25'>") + "</span>";
+		q_html += " <span class='sparql_prefix'>" + triple.predicates.join("</span>/<span class='sparql_prefix'>") + "</span>";
 		if(triple.objectType == "blank"){
 		    q += " [\n";
 		    q_html += " [\n";
@@ -878,15 +842,15 @@ var epBrowser = epBrowser || {
 		}else{
 		    if(triple.objectType == "var"){
 			q += " " + triple.object;
-			q_html += " <span style='color:#1680c4'>" + triple.object + "</span>";
+			q_html += " <span class='sparql_var'>" + triple.object + "</span>";
 		    }else if(triple.objectDataType.match(/literal/)){
 			let lang = "";
 			if(triple.objectLang) lang = "@" + triple.objectLang;
 			q += ' "' +  triple.object + '"' + lang;
-			q_html += ' <span style="color:#b86f48">"' + triple.object + '"</span>' + lang;
+			q_html += ' <span class="sparql_const_literal">"' + triple.object + '"</span>' + lang;
 		    }else{
 			q += " " + triple.object;
-			q_html += " <span style='color:#48a878'>" + triple.object + "</span>";
+			q_html += " <span class='sparql_const'>" + triple.object + "</span>";
 		    }
 		}
 		if(i == triples.length - 1){
@@ -1058,18 +1022,18 @@ var epBrowser = epBrowser || {
 		    .on("mouseover", function(d){ 
 			if(d.child){
 			    let childs = svg.selectAll(".parent_" + d.id);
-			    childs.selectAll("rect").attr("stroke-width", "3px").attr("stroke", "#de2c47");
-			    childs.selectAll("path").attr("stroke", "#de2c47").attr("marker-end", "url(#arrowhead_de2c47)");
+			    childs.selectAll("rect").attr("class", function(d){ return "node node_" + d.node_type + " node_red";} );
+			    childs.selectAll("path").attr("class", "edge edge_red").attr("marker-end", "url(#arrowhead_red)");
 			}else{
 			    if(d.id > 0){
-				d3.select(this).select("rect").attr("stroke-width", "3px").attr("stroke", "#de2c47");
-				svg.select("#edge_" + d.predicate_id).attr("stroke", "#de2c47").attr("marker-end", "url(#arrowhead_de2c47)");
+				d3.select(this).select("rect").attr("class", function(d){ return "node node_" + d.node_type + " node_red";} );
+				svg.select("#edge_" + d.predicate_id).attr("class", "edge edge_red").attr("marker-end", "url(#arrowhead_red)");
 			    }
 			} })
 		    .on("mouseout", function(){
-			svg.selectAll(".node").attr("stroke-width", "1px").attr("stroke", "black");
-			svg.selectAll(".edge").attr("stroke", function(d){return epBrowser.edgeColor(d.count); })
-			    .attr("marker-end", function(d){ return "url(#arrowhead_" + d.color.replace("#", "") + ")"; }) })
+			svg.selectAll(".node").attr("class", function(d){ return "node node_" + d.node_type;} );
+			svg.selectAll(".edge").attr("class", function(d){return "edge edge_" + d.edge_type; })
+			    .attr("marker-end", function(d){ return "url(#arrowhead_" + d.edge_type + ")"; }) })
 		    .style("cursor", "pointer");
 	    }
 	    changeModeSwitchColor(g, true);
@@ -1639,29 +1603,25 @@ var epBrowser = epBrowser || {
 	if(newData.nodes[0]) epBrowser.graphData = newData;
     },
     
-    nodeColor: function(type, p, endpoint){
+    nodeColorType: function(type, p, endpoint){
+	if(type != "uri" && type != "bnode") type = "literal";
+	if(p == epBrowser.rdfType) type = "class";
 	if((!epBrowser.outerEpFlag && epBrowser.endpoint == endpoint)
 	   || (epBrowser.outerEpFlag && (epBrowser.outerEp == endpoint || epBrowser.outerEp == undefined ))){
-	    if(p == epBrowser.rdfType) return "#fff5bf";
-	    else if(type == "uri") return "#ffd29e";
-	    else if(type == "bnode") return "#dddddd";
-	    else return "#ffbeb5";
+	    // through
 	}else{
-	    if(p == epBrowser.rdfType) return "#fffae0";
-	    else if(type == "uri") return "#ffead1";
-	    else if(type == "bnode") return "#f4f4f4";
-	    else return "#ffddd9";
+	    type += "_l";
 	}
+	return type;
     },
 
-    edgeColor: function(count){
-	let color = "";
-	if(count == 1) color = "#cccccc";
-	else if(count <= 2) color = "#aaaaaa";
-	else if(count <= 10) color = "#888888";
-	else if(count <= 50) color = "#666666";
-	else color = "#444444";
-	return color;
+    edgeColorType: function(count){
+	let type = "e";
+	if(count == 1) type = "a";
+	else if(count <= 2) type = "b";
+	else if(count <= 10) type = "c";
+	else if(count <= 50) type = "d";
+	return type;
     },
 
     uriToShort: function(uri, sparql){
