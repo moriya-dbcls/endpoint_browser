@@ -325,12 +325,17 @@ var epBrowser = epBrowser || {
 		    .attr("y", d3.mouse(this)[1] - 10)
 		    .text(text)
 		    .style("display", "block");
+		svg.select("#edge_label_" + d.id).attr("class", "edge_label edge_label_hl");
 	    })
-	    .on("mouseout", function(d){ svg.select("#popup_label").style("display", "none"); });
+	    .on("mouseout", function(d){
+		svg.select("#popup_label").style("display", "none");
+		svg.select("#edge_label_" + d.id).attr("class", "edge_label");
+	    });
 
 	// edge label
 	let edge_label = edge_label_g.append("text")
 	    .text(function(d) { return d.predicate_label; })
+	    .attr("id", function(d){ return "edge_label_" + d.id;} )
 	    .attr("class", "edge_label")
 	    .attr("text-anchor", function(){
 		if(epBrowser.nodeGridFlag) return "end";
@@ -401,7 +406,7 @@ var epBrowser = epBrowser || {
 	    .attr("dx", "0px")
 	    .attr("dy", "38px");
 	
-	// mouse event
+	// node mouse event
 	let endpoint = epBrowser.endpoint;
 	if(epBrowser.outerEpFlag && epBrowser.outerEp && epBrowser.outerEp.match(/^https*:\/\//)) endpoint = epBrowser.outerEp;
 	node_mouse_eve.filter(function(d) { return !d.type.match(/literal/) || epBrowser.inverseFlag; })
@@ -531,8 +536,8 @@ var epBrowser = epBrowser || {
 		return epBrowser.calcPath(d.source.x, d.source.y, d.target.x, d.target.y, d.has_reverse);
 	    });
 	    // edge label
-	    edge_label.attr("dx", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "x"); })
-		.attr("dy", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "y"); });
+	    edge_label.attr("dx", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "x", d.has_reverse); })
+		.attr("dy", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "y", d.has_reverse); });
 	    // node
 	    node_g.attr("transform", function(d) {
 		if(epBrowser.nodeGridFlag) d.x = d.layer * 360 + epBrowser.entryNodeIndex.x;
@@ -1275,7 +1280,7 @@ var epBrowser = epBrowser || {
 	    // save index
 	    epBrowser.edgeIndex = {};
 	    for(elm of epBrowser.graphData.edges){
-		epBrowser.edgeIndex[elm.id] = {x1: elm.source.x, y1: elm.source.y, x2: elm.target.x, y2: elm.target.y, l1: elm.source.layer, l2: elm.target.layer};
+		epBrowser.edgeIndex[elm.id] = {x1: elm.source.x, y1: elm.source.y, x2: elm.target.x, y2: elm.target.y, l1: elm.source.layer, l2: elm.target.layer, has_reverse: elm.has_reverse};
 	    }
 
 	    //re-draw
@@ -1288,11 +1293,11 @@ var epBrowser = epBrowser || {
 		    let s_x = data[d.id].l1 * 360 + 150;
 		    let t_x = data[d.id].l2 * 360 + 150;
 		}
-		return epBrowser.calcPath(data[d.id].x1, data[d.id].y1, data[d.id].x2, data[d.id].y2);
+		return epBrowser.calcPath(data[d.id].x1, data[d.id].y1, data[d.id].x2, data[d.id].y2, data[d.id].has_reverse);
 	    });
 	    // set edge label
-	    svg.selectAll(".edge_label").attr("dx", function(d){ return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "x"); })
-		.attr("dy", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "y"); });
+	    svg.selectAll(".edge_label").attr("dx", function(d){ return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "x", d.has_reverse); })
+		.attr("dy", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "y", d.has_reverse); });
 
 	    // restart
 	    if(chageGraphTypeFlag){
@@ -1399,13 +1404,13 @@ var epBrowser = epBrowser || {
 	}
     },
 
-    calcEdgeLabelPos: function(x1, y1, x2, y2, label){
+    calcEdgeLabelPos: function(x1, y1, x2, y2, label, reverse){
 	if(!epBrowser.nodeGridFlag){
 	    if(label == "x"){
-		if(x1 > x2) return (x1 + x2 * 2) / 3 + 6; // left direction edge
+		if(x1 > x2 || reverse) return (x1 + x2 * 2) / 3 + 6; // left direction edge
 		else return (x1 * 2 + x2) / 3 + 6;        // right direction edge
 	    }else{
-		if(x1 > x2) return (y1 + y2 * 2) / 3;     // left direction edge
+		if(x1 > x2 || reverse) return (y1 + y2 * 2) / 3;     // left direction edge
 		else return (y1 * 2 + y2) / 3;            // right direction edge
 	    }
 	}else{
@@ -1564,8 +1569,7 @@ var epBrowser = epBrowser || {
 		edgeId++;
 	    }
 	}
-	console.log(data);
-	console.log(edgeST2id);
+//	console.log(data);
 //	console.log(epBrowser.nodeGridPos);
     },
 
