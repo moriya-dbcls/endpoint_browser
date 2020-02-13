@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.0.8
+// version: 0.0.10
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.0.8",
+    version: "0.0.10",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     debug: false,
@@ -206,6 +206,7 @@ var epBrowser = epBrowser || {
 	//// params for graph data
 	epBrowser.nodeKey2id = {[json[0].s.value]: 0};
 	epBrowser.edgeList = {};
+	epBrowser.edgeST2id = {};
 	epBrowser.addPointIndex = [null, null];  // initial position of add-node in the svg
 	
 	// prefix setting
@@ -527,7 +528,7 @@ var epBrowser = epBrowser || {
 		    d.source.x = d.source.layer * 360 + epBrowser.entryNodeIndex.x;
 		    d.target.x = d.target.layer * 360 + epBrowser.entryNodeIndex.x;
 		}
-		return epBrowser.calcPath(d.source.x, d.source.y, d.target.x, d.target.y);
+		return epBrowser.calcPath(d.source.x, d.source.y, d.target.x, d.target.y, d.has_reverse);
 	    });
 	    // edge label
 	    edge_label.attr("dx", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "x"); })
@@ -1340,13 +1341,13 @@ var epBrowser = epBrowser || {
 	epBrowser.forcegraph(renderDiv, param);
     },
 
-    calcPath: function(x1, y1, x2, y2){
+    calcPath: function(x1, y1, x2, y2, reverse){
 	if(!epBrowser.nodeGridFlag){
 	    let margin = 5;
+	    let bi_dir_margin = 6;
 	    let rect_w = 160/2 + margin;
 	    let rect_h = 40/2 + margin;
 	    let rate = rect_w / rect_h;
-	    
 	    let w = x2 - x1;
 	    let h = y2 - y1;
 	    let sign_x = w / Math.abs(w);
@@ -1358,9 +1359,16 @@ var epBrowser = epBrowser || {
 		x2 = x2 - (sign_x * rect_w);
 		y2 = y2 - (sign_y * rect_w * Math.abs(h) / Math.abs(w));
 	    }
-	    
+	    if(reverse != undefined){
+		if(Math.abs(h) * (rate + bi_dir_margin / 2 / rect_h) > Math.abs(w)){
+		    x1 += bi_dir_margin * (w ** 2 + h ** 2) ** 0.5 / h;
+		    x2 += bi_dir_margin * (w ** 2 + h ** 2) ** 0.5 / h;
+		}else{
+		    y1 -= bi_dir_margin * (w ** 2 + h ** 2) ** 0.5 / w;
+		    y2 -= bi_dir_margin * (w ** 2 + h ** 2) ** 0.5 / w;
+		}
+	    }
 	    return "M" + x1 + "," + y1 + " L" + x2 + "," + y2;
-	    
 	}else{
 	    let x_margin = 85;
 	    let y_margin = 25;
@@ -1438,6 +1446,7 @@ var epBrowser = epBrowser || {
 	let nodeKey2id = epBrowser.nodeKey2id;
 	let parent = Array.from(epBrowser.selectParent);
 	let edgeList = epBrowser.edgeList;
+	let edgeST2id = epBrowser.edgeST2id;
 	let nodeId = data.nodes[data.nodes.length - 1].id + 1;
 	let edgeId = 0;
 	parent.push(epBrowser.selectNode);
@@ -1517,7 +1526,7 @@ var epBrowser = epBrowser || {
 		    //// add edge
 		    //  data.edges.push({id: edgeId, source: epBrowser.selectNode, target: nodeKey2id[obj.key], predicate: json[i].p.value,  predicate_label: epBrowser.uriToShort(json[i].p.value), count: json[i].o_count.value});
 		    //	edgeId++;
-		    //// don't add edge
+		    //// don't add edge, add predicate label
 		    let flag = 1;
 		    let add_predicate = epBrowser.uriToShort(json[i].p.value);
 		    for(elm of data.edges){
@@ -1527,8 +1536,20 @@ var epBrowser = epBrowser || {
 			    break;
 			}
 		    }
+		    ////
 		    if(flag){
 			data.edges.push({id: edgeId, source: source, target: target, predicate: json[i].p.value, predicate_label: epBrowser.uriToShort(json[i].p.value), count: json[i].o_count.value, parent: parent, edge_key: edge_key});
+			edgeST2id[source + "_" + target] = edgeId;
+			// add bi-directional flag
+			if(edgeST2id[target + "_" + source]){
+			    data.edges[data.edges.length - 1].has_reverse = edgeST2id[target + "_" + source];
+			    for(let edge of data.edges){
+				if(edge.id == edgeST2id[target + "_" + source]){
+				    edge.has_reverse = edgeId;
+				    break;
+				}
+			    }
+			}
 			edgeId++;
 		    }
 		    edgeList[edge_key] = 1;
@@ -1538,15 +1559,34 @@ var epBrowser = epBrowser || {
 		data.nodes.push(obj);
 		data.edges.push({id: edgeId, source: source, target: target, predicate: json[i].p.value, predicate_label: epBrowser.uriToShort(json[i].p.value), count: json[i].o_count.value, parent: parent, edge_key: edge_key});
 		edgeList[edge_key] = 1;
+		edgeST2id[source + "_" + target] = edgeId;
 		nodeId++;
 		edgeId++;
 	    }
 	}
-//	console.log(data);
+	console.log(data);
+	console.log(edgeST2id);
 //	console.log(epBrowser.nodeGridPos);
     },
 
     removeGraphData: function(renderDiv, param, clickData){
+	let removeReverseFlag = function(source, target, reverse){
+	    if(reverse != undefined){
+		for(let edge of epBrowser.graphData.edges){
+		    if(edge.id == reverse){
+			edge.has_reverse = undefined;
+			break;
+		    }
+		}
+		for(let edge of newData.edges){
+		    if(edge.id == reverse){
+			edge.has_reverse = undefined;
+			break;
+		    }
+		}
+	    }
+	    epBrowser.edgeST2id[source + "_" + target] = undefined;	
+	}
 	let svg = renderDiv.select("svg");
 	let newData = {nodes: [], edges: []};
 	if(clickData.child){
@@ -1564,7 +1604,11 @@ var epBrowser = epBrowser || {
 		let parent_s = "_" + epBrowser.graphData.edges[i].parent.join("_") + "_";
 		let regex = new RegExp("_" + clickData.id + "_");
 		if(!parent_s.match(regex)) newData.edges.push(epBrowser.graphData.edges[i]);
-		else epBrowser.edgeList[epBrowser.graphData.edges[i].edge_key] = undefined;
+		else{
+		    epBrowser.edgeList[epBrowser.graphData.edges[i].edge_key] = undefined;
+		    removeReverseFlag(epBrowser.graphData.edges[i].source, epBrowser.graphData.edges[i].target, epBrowser.graphData.edges[i].has_reverse);
+		    // epBrowser.edgeST2id[epBrowser.graphData.edges[i].source + "_" + epBrowser.graphData.edges[i].target] = undefined;
+		}
 	    }
 	}else if(clickData.id > 0){
 	    svg.select("#node_g_id_" + clickData.id).remove();
@@ -1578,6 +1622,8 @@ var epBrowser = epBrowser || {
 		if(id != clickData.id) newData.edges.push(epBrowser.graphData.edges[i]);
 		else{
 		    epBrowser.edgeList[epBrowser.graphData.edges[i].edge_key] = undefined;
+		    removeReverseFlag(epBrowser.graphData.edges[i].source, epBrowser.graphData.edges[i].target, epBrowser.graphData.edges[i].has_reverse);
+		    // epBrowser.edgeST2id[epBrowser.graphData.edges[i].source + "_" + epBrowser.graphData.edges[i].target] = undefined;
 		    svg.select("#edge_g_id_" + epBrowser.graphData.edges[i].id).remove();
 		    svg.select("#edge_label_g_id_" + epBrowser.graphData.edges[i].id).remove();
 		    // when remove last edge,  (##### dev ##### not apply to inv edge)

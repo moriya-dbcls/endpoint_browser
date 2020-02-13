@@ -51,7 +51,7 @@ download binary from [ts release](https://github.com/togostanza/ts/releases) and
 #### start endpoint browser
 http://localhost:3000/html/
 
-## hoge
+## Opt. 
 hard-coded port num and directory name 
 
     ts/endpoint-browser/_header.html:2 src="//localhost:3000/html/endpoint-browser.js"
