@@ -158,7 +158,7 @@ var epBrowser = epBrowser || {
 		let url = "https://sparql-support.dbcls.jp/?query=" + encodeURIComponent(query + limit) + "&exec=1";
 		window.open(url, "ss_target");
 	    });
-	let varNameDiv = renderDiv.append("div").attr("id", "var_name_form");
+	let varNameDiv = renderDiv.append("div").attr("id", "var_name_form").style("display", "none");
 	varNameDiv.append("input").attr("id", "var_name_node_id").attr("type", "hidden");
 	
 	// start svg zoom
@@ -1308,29 +1308,31 @@ var epBrowser = epBrowser || {
 
 	// temporaly mode change by key press
 	document.addEventListener('keydown', (e) => {
-	    if(e.key == "r" || e.key == "s" || e.key == "b"){
-		if(!epBrowser.keyPressFlag){
-		    if(epBrowser.subgraphMode) epBrowser.preModeText = "subgraph to SPARQL";
-		    else if(epBrowser.nodeRemoveMode) epBrowser.preModeText = "remove node";
-		    else epBrowser.preModeText = "browsing";
-	    
-		    let text = false;
-		    if(e.key == "s") text = "subgraph to SPARQL";
-		    else if(e.key == "r") text = "remove node";
-		    else text = "browsing";
-		    
-		    let id = text.replace(/[^\w]/g, "_").replace(/\./g, "_");
-		    let g = svg.select("#" + id + "_mode_switch_g");
-		    if(text != epBrowser.preModeText){
-			epBrowser.keyPressFlag = true;
-			changeMode(g, text);
-		    }
+	    let flag = false;
+	    if(e.key == "r" || e.key == "g" || e.key == "b") flag = true;
+	    if(renderDiv.select("#var_name_form").style("display") == "block") flag = false;
+	    if(epBrowser.keyPressFlag) flag = false;
+	    if(flag){
+		if(epBrowser.subgraphMode) epBrowser.preModeText = "subgraph to SPARQL";
+		else if(epBrowser.nodeRemoveMode) epBrowser.preModeText = "remove node";
+		else epBrowser.preModeText = "browsing";
+		
+		let text = false;
+		if(e.key == "g") text = "subgraph to SPARQL";
+		else if(e.key == "r") text = "remove node";
+		else text = "browsing";
+		
+		let id = text.replace(/[^\w]/g, "_").replace(/\./g, "_");
+		let g = svg.select("#" + id + "_mode_switch_g");
+		if(text != epBrowser.preModeText){
+		    epBrowser.keyPressFlag = true;
+		    changeMode(g, text);
 		}
 	    }
 	});
 
 	document.addEventListener('keyup', (e) => {
-	    if(e.key == "r" || e.key == "s" || e.key == "b"){
+	    if(epBrowser.keyPressFlag && (e.key == "r" || e.key == "g" || e.key == "b")){
 		epBrowser.keyPressFlag = false;
 		let text = epBrowser.preModeText;
 		let id = text.replace(/[^\w]/g, "_").replace(/\./g, "_");
