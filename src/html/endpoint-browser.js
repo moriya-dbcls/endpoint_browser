@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.0.10
+// version: 0.0.11
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.0.10",
+    version: "0.0.11",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     debug: false,
@@ -1305,6 +1305,39 @@ var epBrowser = epBrowser || {
 		epBrowser.simulation.restart();
 	    }
 	}
+
+	// temporaly mode change by key press
+	document.addEventListener('keydown', (e) => {
+	    if(e.key == "r" || e.key == "s" || e.key == "b"){
+		if(!epBrowser.keyPressFlag){
+		    if(epBrowser.subgraphMode) epBrowser.preModeText = "subgraph to SPARQL";
+		    else if(epBrowser.nodeRemoveMode) epBrowser.preModeText = "remove node";
+		    else epBrowser.preModeText = "browsing";
+	    
+		    let text = false;
+		    if(e.key == "s") text = "subgraph to SPARQL";
+		    else if(e.key == "r") text = "remove node";
+		    else text = "browsing";
+		    
+		    let id = text.replace(/[^\w]/g, "_").replace(/\./g, "_");
+		    let g = svg.select("#" + id + "_mode_switch_g");
+		    if(text != epBrowser.preModeText){
+			epBrowser.keyPressFlag = true;
+			changeMode(g, text);
+		    }
+		}
+	    }
+	});
+
+	document.addEventListener('keyup', (e) => {
+	    if(e.key == "r" || e.key == "s" || e.key == "b"){
+		epBrowser.keyPressFlag = false;
+		let text = epBrowser.preModeText;
+		let id = text.replace(/[^\w]/g, "_").replace(/\./g, "_");
+		let g = svg.select("#" + id + "_mode_switch_g");
+		changeMode(g, text);
+	    }
+	});
     },
     
     hideVarNameDiv: function(renderDiv){
