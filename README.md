@@ -34,7 +34,7 @@ download binary from [ts release](https://github.com/togostanza/ts/releases) and
 ### endpoint browser
 #### move files
 
-    $ mv src/sparqlist/endpoint_browser_links.md sparqlist/repository/
+    $ mv src/sparqlist/*.md sparqlist/repository/
     $ mv src/html sparqlist/public/
 
 #### start SPARQList

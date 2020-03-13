@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.0.11
+// version: 0.0.12
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,9 +7,10 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.0.11",
+    version: "0.0.12",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
+    findEndpointApi: "find_endpoint_from_uri",
     debug: false,
     clickableFlag: true,
     labelFlag: true,
@@ -22,8 +23,11 @@ var epBrowser = epBrowser || {
     fetchReq: function(method, url, renderDiv, param, callback){
 	//console.log(url);
 	//console.log(param.apiArg);
-	let [gid, svg, hc] = epBrowser.loading.append(renderDiv, param);
-	let loadingTimer = setInterval(function(){epBrowser.loading.anime(svg, gid, hc);}, 300);
+	let gid, svg, hc, loadingTimer;
+	if(renderDiv){
+	    [gid, svg, hc] = epBrowser.loading.append(renderDiv, param);
+	    loadingTimer = setInterval(function(){epBrowser.loading.anime(svg, gid, hc);}, 300);
+	}
 	let options = {method: method};
         if(method == "get" && param.apiArg[0]){
 	    url += "?" + param.apiArg.join("&");
@@ -36,14 +40,14 @@ var epBrowser = epBrowser || {
 	try{
 	    let res = fetch(url, options).then(res=>res.json());
 	    res.then(function(json){
-		epBrowser.loading.remove(svg, gid);
+		if(renderDiv) epBrowser.loading.remove(svg, gid);
 		callback(json, renderDiv, param);
-		clearInterval(loadingTimer);
+		if(renderDiv) clearInterval(loadingTimer);
 	    });
 	}catch(error){
 	    console.log(error);
-	    clearInterval(loadingTimer);
-	    epBrowser.loading.error(svg, gid, width / 2);
+	    if(renderDiv) clearInterval(loadingTimer);
+	    if(renderDiv) epBrowser.loading.error(svg, gid, width / 2);
 	}
     },
 
@@ -158,8 +162,37 @@ var epBrowser = epBrowser || {
 		let url = "https://sparql-support.dbcls.jp/?query=" + encodeURIComponent(query + limit) + "&exec=1";
 		window.open(url, "ss_target");
 	    });
+	// popup input DOM
 	let varNameDiv = renderDiv.append("div").attr("id", "var_name_form").style("display", "none");
 	varNameDiv.append("input").attr("id", "var_name_node_id").attr("type", "hidden");
+	// popup outer endpoints DOM
+	let outerEpDiv = renderDiv.append("div").attr("id", "outer_endpoints").style("display", "none");
+	outerEpDiv.append("input").attr("id", "outer_ep_click_uri").attr("type", "hidden");
+	let outerEpSelect = outerEpDiv.append("select")
+	    .attr("id", "outer_ep_select")
+	    .on("change", function(d){
+		let value = this.value;
+		if(value.match(/^https*:\/\//)){
+		    epBrowser.outerEp = value;
+		    renderDiv.select("#outer_ep").text(value);
+		    let entry = renderDiv.select("#outer_ep_click_uri").attr("value");
+		    for(let i = 0; i < param.apiArg.length; i++){
+			if(param.apiArg[i].match(/^entry=/)){
+			    param.apiArg[i] = 'entry=' + encodeURIComponent(entry);
+			}else if(param.apiArg[i].match(/^inv=/)){
+			    param.apiArg.splice(i, 1)
+			}else if(param.apiArg[i].match(/^endpoint=/)){
+			    param.apiArg[i] = "endpoint=" + encodeURIComponent(epBrowser.outerEp);
+			}
+		    }
+		    if(epBrowser.inverseFlag) param.apiArg.push("inv=1");
+		    let url = epBrowser.api + epBrowser.getLinksApi;
+		    console.log(param.apiArg.join(" "));
+		    epBrowser.outerEpFlag = true;
+		    epBrowser.fetchReq("post", url, renderDiv, param, epBrowser.updateGraph);
+		}
+		outerEpDiv.style("display", "none");
+	    });
 	
 	// start svg zoom
 	svg.call(d3.zoom().scaleExtent([0.1, 5])
@@ -208,6 +241,7 @@ var epBrowser = epBrowser || {
 	epBrowser.edgeList = {};
 	epBrowser.edgeST2id = {};
 	epBrowser.addPointIndex = [null, null];  // initial position of add-node in the svg
+	epBrowser.endpointList = {};
 	
 	// prefix setting
 	epBrowser.rdfType = epBrowser.prefix.rdf + "type";
@@ -352,6 +386,7 @@ var epBrowser = epBrowser || {
 	// node
 	let rect = node_mouse_eve.append("rect")
 	    .attr("id", function(d) { return d.id; })
+	    .attr("rx", "8px").attr("ry", "8px")   // for iOS browser
 	    .attr("class", function(d){
 		d.node_type = epBrowser.nodeColorType(d.type, d.predicate, d.endpoint);
 		return "node node_" + d.node_type;
@@ -405,7 +440,7 @@ var epBrowser = epBrowser || {
 	    .attr("class", "node_label_sparql")
 	    .attr("dx", "0px")
 	    .attr("dy", "38px");
-	
+
 	// node mouse event
 	let endpoint = epBrowser.endpoint;
 	if(epBrowser.outerEpFlag && epBrowser.outerEp && epBrowser.outerEp.match(/^https*:\/\//)) endpoint = epBrowser.outerEp;
@@ -472,9 +507,41 @@ var epBrowser = epBrowser || {
 		d3.select(this).select("rect").attr("class", function(d){ return "node node_" + d.node_type; });
 	    })
 	    .style("cursor", "pointer");
-		
-	svg.selectAll("text").style("user-select", "none");
+
+	// identifiers.org && http://purl.
+	if(epBrowser.outerEpFlag){
+	    node_g.filter(function(d){ return d.predicate != epBrowser.rdfType && (d.key.match(/http:\/\/identifiers\.org\//) || d.key.match(/http:\/\/purl\./)); })
+		.append("polygon")
+		.attr("class", "select_outer_endpoint")
+		.attr("points", "85,-10 85,10 90,10 100,0 90,-10") 
+		.attr("fill", "#888888")
+		.style("cursor", "pointer")
+		.on("click", function(d){
+		    epBrowser.selectNode = d.id;
+		    epBrowser.selectLayer = d.layer;
+		    renderDiv.select("#outer_ep_click_uri").attr("value", d.key);
+		    let mouse = d3.mouse(d3.select('body').node());
+		    let outerSel = renderDiv.select("#outer_ep_select");
+		    outerSel.selectAll(".outer_ep_opt").remove();
+		    outerSel.selectAll(".outer_ep_opt")
+			.data(epBrowser.endpointList[d.key].docs)
+			.enter()
+			.append("option")
+			.attr("class", "outer_ep_opt")
+			.attr("value", function(d){ return d.uri;})
+			.text(function(d){ return d.id;});
+		    renderDiv.select("#outer_endpoints")
+			.style("position", "absolute")
+			.style("top", mouse[1] + "px")
+			.style("left", (mouse[0] + 20) + "px")
+			.style("display", "block");
+		});
+	}else{
+	    node_g.selectAll(".select_outer_endpoint").remove();
+	}
 	
+	svg.selectAll("text").style("user-select", "none");
+
 	// simulation
 	epBrowser.startSimulation(edge, edge_label, node_g);
 	
@@ -644,7 +711,7 @@ var epBrowser = epBrowser || {
 		    if(d.type.match(/literal/)){
 			text = '"' + d.key + '"';
 			literal_flag = "_literal";
-		    }else text = "<URI> const.";	    
+		    }else text = "<URI> const.";
 		}else if(value == "path"){
 		    text = "/";
 		}else if(value == "blank"){
@@ -936,8 +1003,8 @@ var epBrowser = epBrowser || {
 		    renderDiv.select("#outer_ep_box").remove();
 		}else if(!epBrowser.subgraphMode && !epBrowser.nodeRemoveMode){
 		    optionalSearchFlag = true;
-		    renderDiv.select("#browsing_option").style("display", "block");
-		    box.select("#graph_control").attr("transform", "translate(0,56)");
+		    opt.style("display", "block");
+		    ctrl.attr("transform", "translate(0,56)");
 		}
 	    });
 	box.append("text").attr("x", 225).attr("y", 15).text(")").attr("font-size", "11px");
@@ -1108,9 +1175,7 @@ var epBrowser = epBrowser || {
 			    });
 			input.node().focus();
 		    });
-		if(epBrowser.outerEp){
-		    reDrawGraph();
-		}
+		reDrawGraph();
 	    }else{
 		epBrowser.outerEpFlag = false;
 		epBrowser.clickableFlag = true;
@@ -1159,7 +1224,7 @@ var epBrowser = epBrowser || {
 		    });
 	    }else{
 		svg.select("#prefix_box").remove();
-		epBrowser.hideVarNameDiv(renderDiv, param);
+		epBrowser.hideVarNameDiv(renderDiv);
 	    }
 	}
 
@@ -1305,34 +1370,52 @@ var epBrowser = epBrowser || {
 		epBrowser.simulation.restart();
 	    }
 	}
-
+	
 	// temporaly mode change by key press
 	document.addEventListener('keydown', (e) => {
 	    let flag = false;
-	    if(e.key == "r" || e.key == "g" || e.key == "b") flag = true;
-	    if(renderDiv.select("#var_name_form").style("display") == "block") flag = false;
+	    if(e.key == "r" || e.key == "s" || e.key == "b" || e.key == "i" || e.key == "f") flag = true;
+	    if(renderDiv.select("#var_name_form").style("display") == "block"
+	       || renderDiv.select("#outer_endpoints").style("display") == "block") flag = false;
 	    if(epBrowser.keyPressFlag) flag = false;
 	    if(flag){
-		if(epBrowser.subgraphMode) epBrowser.preModeText = "subgraph to SPARQL";
-		else if(epBrowser.nodeRemoveMode) epBrowser.preModeText = "remove node";
-		else epBrowser.preModeText = "browsing";
-		
-		let text = false;
-		if(e.key == "g") text = "subgraph to SPARQL";
-		else if(e.key == "r") text = "remove node";
-		else text = "browsing";
-		
-		let id = text.replace(/[^\w]/g, "_").replace(/\./g, "_");
-		let g = svg.select("#" + id + "_mode_switch_g");
-		if(text != epBrowser.preModeText){
-		    epBrowser.keyPressFlag = true;
-		    changeMode(g, text);
+		if(e.key == "r" || e.key == "s" || e.key == "b"){ // mode change
+		    let text = false;
+		    if(e.key == "b") text = "browsing";
+		    else if(e.key == "s") text = "subgraph to SPARQL";
+		    else if(e.key == "r") text = "remove node";
+		    let id = text.replace(/[^\w]/g, "_").replace(/\./g, "_");
+		    let g = svg.select("#" + id + "_mode_switch_g");
+		    
+		    if(!e.ctrlKey){
+			if(epBrowser.subgraphMode) epBrowser.preModeText = "subgraph to SPARQL";
+			else if(epBrowser.nodeRemoveMode) epBrowser.preModeText = "remove node";
+			else epBrowser.preModeText = "browsing";
+			if(text != epBrowser.preModeText){
+			    epBrowser.keyPressFlag = true;
+			    changeMode(g, text);
+			}
+		    }else changeMode(g, text);
+		}else if(e.ctrlKey){  // optional mode
+		    if(opt.style("display") == "none"){
+			changeMode(svg.select("#browsing_mode_switch_g"), "browsing");
+			opt.style("display", "block");
+			ctrl.attr("transform", "translate(0,56)");
+		    }
+		    let flag = true;
+		    if(e.key == "i"){
+			if(epBrowser.inverseFlag) flag = false;
+			optInverse(svg.select("#inverse_link_switch_g"), flag);
+		    }else if(e.key == "f"){
+			if(epBrowser.outerEpFlag) flag = false;
+			optFederated(svg.select("#federated_search_switch_g"), flag);
+		    }
 		}
 	    }
 	});
 
 	document.addEventListener('keyup', (e) => {
-	    if(epBrowser.keyPressFlag && (e.key == "r" || e.key == "g" || e.key == "b")){
+	    if(epBrowser.keyPressFlag && (e.key == "r" || e.key == "s" || e.key == "b")){
 		epBrowser.keyPressFlag = false;
 		let text = epBrowser.preModeText;
 		let id = text.replace(/[^\w]/g, "_").replace(/\./g, "_");
@@ -1345,6 +1428,7 @@ var epBrowser = epBrowser || {
     hideVarNameDiv: function(renderDiv){
 	let div = renderDiv.select("#var_name_form").style("display", "none");
 	div.select("#var_name").remove();
+	renderDiv.select("#outer_endpoints").style("display", "none");
     },
 
     setNodeVarName: function(renderDiv, id, var_name){
@@ -1602,12 +1686,22 @@ var epBrowser = epBrowser || {
 		edgeST2id[source + "_" + target] = edgeId;
 		nodeId++;
 		edgeId++;
+		if((obj.key.match(/^http:\/\/identifiers.org\//) || obj.key.match(/^http:\/\/purl\./)) && !epBrowser.endpointList[obj.key]){
+		    let url = epBrowser.api + epBrowser.findEndpointApi;
+		    epBrowser.fetchReq("post", url, false, {"apiArg": ["uri=" + encodeURIComponent(obj.key)]}, epBrowser.addEndpointToUri);
+		}
 	    }
 	}
 //	console.log(data);
 //	console.log(epBrowser.nodeGridPos);
     },
 
+    addEndpointToUri: function(json, notUse, param){
+	let tmp = param.apiArg[0].split(/=/);
+	json.docs.unshift({id: "-- select endpoint", uri: false });
+	epBrowser.endpointList[decodeURIComponent(tmp[1])] = json;
+    },
+    
     removeGraphData: function(renderDiv, param, clickData){
 	let removeReverseFlag = function(source, target, reverse){
 	    if(reverse != undefined){

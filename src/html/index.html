@@ -42,6 +42,12 @@
       div#main {
       margin-top: 20px;
       }
+      div.hr {
+      background-color: #86b9d9;
+      width: 100%;
+      margin-top: 0px;
+      height: 20px;
+      }
       h1 {
       font-size: 24px;
       margin: 0px;
@@ -131,7 +137,7 @@
   </head>
   <body>
     <div id="head">
-     <a href="./sparql-support.html" id="logolink"><img src="//sparql-support.dbcls.jp/file/logo.png" width="70" height="70" id="logo"></a> 
+     <a href="./sparql-support.html" id="logolink"><img src="./file/logo.png" width="70" height="70" id="logo"></a> 
      <h1>Endpoint browser <span style="color:#ffcccc">alpha</dev></h1>
     </div>
     <div id="main">
@@ -156,10 +162,12 @@
 	    <a href="./sparql-support.html#endpoint_browser" id="reflink">about Endpoint browser</a> |
 	    <a href="./">SPARQL support</a>
 	  </p>
-	  <p style="margin-left: 20px;font-size: 14px;">© 2019 <a href="https://dbcls.rois.ac.jp/">DBCLS</a>.</p>
+<!--	  <p style="margin-left: 20px;font-size: 14px;">© 2019 <a href="https://dbcls.rois.ac.jp/">DBCLS</a>.</p> -->
 	</div>
       </div>
     </div>
+
+    <div class="hr"></div>
     
     <script language="javascript">
     <!--
@@ -209,7 +217,8 @@
 -->
     </script>
 
-    <script type="text/javascript" src="https://dbcls.rois.ac.jp/DBCLS-common-header-footer/common-header/script/common-header.js" style="display: block" id="common-header__script"></script>
+    <script type="text/javascript" src="https://dbcls.rois.ac.jp/DBCLS-common-header-footer/v2/script/common-header-and-footer.js" style="display: block" id="common-header-and-footer__script" data-header-menu-type="deployed" data-show-footer="true" data-show-footer-links="true" data-year="2019"></script>
+    
     <style>
 #dbcls-common-header nav.gnav {
      margin-left: 30px;
