@@ -509,7 +509,7 @@ var epBrowser = epBrowser || {
 	    .style("cursor", "pointer");
 
 	// identifiers.org && http://purl.
-	if(epBrowser.outerEpFlag){
+	if(epBrowser.outerEpFlag && epBrowser.outerEp === undefined){
 	    node_g.filter(function(d){ return d.predicate != epBrowser.rdfType && (d.key.match(/http:\/\/identifiers\.org\//) || d.key.match(/http:\/\/purl\./)); })
 		.append("polygon")
 		.attr("class", "select_outer_endpoint")
@@ -1133,9 +1133,9 @@ var epBrowser = epBrowser || {
 		outer_ep_box.append("rect").attr("width", 600).attr("height", 20)
 		    .attr("x", 440).attr("y", 0)
 		    .attr("fill", "#ffffff").attr("stroke", "#666666").attr("stroke-width", "2px");
-		outer_ep_box.append("text").attr("x", 450).attr("y", 10).text("outer endpoint:")
+		outer_ep_box.append("text").attr("x", 450).attr("y", 10).text("endpoint:")
 		    .attr("font-size", "13px").style("cursor", "pointer").attr("fill", "#666666").attr("dominant-baseline", "middle");
-		outer_ep_box.append("text").attr("id", "outer_ep").attr("x", 570).attr("y", 10)
+		outer_ep_box.append("text").attr("id", "outer_ep").attr("x", 530).attr("y", 10)
 		    .attr("font-size", "13px").style("cursor", "pointer").attr("fill", "#1680c4").attr("dominant-baseline", "middle")
 		    .text(function(){
 			if(epBrowser.outerEp){
@@ -1175,6 +1175,16 @@ var epBrowser = epBrowser || {
 			    });
 			input.node().focus();
 		    });
+		outer_ep_box.append("text").attr("x", 980).attr("y", 15).text("(").attr("font-size", "11px");
+		outer_ep_box.append("text").attr("x", 990).attr("y", 15).text("clear").attr("font-size", "11px").style("cursor", "pointer").attr("fill", "#1680c4")
+		    .on("click", function(){
+			epBrowser.outerEp = undefined;
+			epBrowser.clickableFlag = false;
+			outer_ep_box.select("#outer_ep").text("undefined");
+			reDrawGraph();
+		    });
+		outer_ep_box.append("text").attr("x", 1022).attr("y", 15).text(")").attr("font-size", "11px");
+		
 		reDrawGraph();
 	    }else{
 		epBrowser.outerEpFlag = false;
