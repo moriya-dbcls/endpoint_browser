@@ -510,11 +510,11 @@ var epBrowser = epBrowser || {
 
 	// identifiers.org && http://purl.
 	if(epBrowser.outerEpFlag && epBrowser.outerEp === undefined){
-	    node_g.filter(function(d){ return d.predicate != epBrowser.rdfType && (d.key.match(/http:\/\/identifiers\.org\//) || d.key.match(/http:\/\/purl\./)); })
-		.append("polygon")
+	    let federated_g = node_g.filter(function(d){
+		return d.predicate != epBrowser.rdfType && (d.key.match(/http:\/\/identifiers\.org\//) || d.key.match(/http:\/\/purl\./));
+	    })
+		.append("g")
 		.attr("class", "select_outer_endpoint")
-		.attr("points", "85,-10 85,10 90,10 100,0 90,-10") 
-		.attr("fill", "#888888")
 		.style("cursor", "pointer")
 		.on("click", function(d){
 		    epBrowser.selectNode = d.id;
@@ -536,6 +536,19 @@ var epBrowser = epBrowser || {
 			.style("left", (mouse[0] + 20) + "px")
 			.style("display", "block");
 		});
+	    federated_g.append("rect")
+		.attr("stroke", "#444444")
+		.attr("stroke-width", "3px")
+		.attr("fill", "#ffffff")
+		.attr("x", 75).attr("y", -10).attr("width", 20).attr("height", 20).attr("rx", 5).attr("ry", 5);
+	    federated_g.append("rect")
+		.attr("x", 85).attr("y", -11.6).attr("width", 11.6).attr("height", 11.6)
+		.attr("fill", "#ffffff")
+		.attr("stroke", "none");
+	    federated_g.append("polygon")
+		.attr("points", "98,-13 85,-13 89.875,-8.125 81.75,0 85,3.25 93.125,-4.875 98,0")
+		.attr("stroke", "none")
+		.attr("fill", "#444444");
 	}else{
 	    node_g.selectAll(".select_outer_endpoint").remove();
 	}
