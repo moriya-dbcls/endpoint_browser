@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.0.12
+// version: 0.0.13
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.0.12",
+    version: "0.0.13",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -441,6 +441,24 @@ var epBrowser = epBrowser || {
 	    .attr("dx", "0px")
 	    .attr("dy", "38px");
 
+	// literal type
+	let node_mouse_eve_literal = node_g.selectAll(".node_mouse_eve_g")
+	    .filter(function(d) { return d.type == "literal" || d.type == "typed-literal"; });
+	node_mouse_eve_literal.append("rect").attr("class", "literal_type_box");
+	node_mouse_eve_literal.append("text").attr("class", "literal_type").attr("transform", "translate(76) rotate(-90)")
+	    .text(function(d){
+		let dtype = "str";
+		if(d.type != "literal") {
+		    dtype = d.datatype.replace("http://www.w3.org/2001/XMLSchema#", "");
+		    if(dtype == "string") dtype = "str";
+		    else if(dtype == "integer") dtype = "int";
+		    else if(dtype == "boolean") dtype = "bool";
+		    else if(dtype == "hexBinary") dtype = "hex";
+		    else if(dtype == "base64Binary") dtype = "base64";
+		}
+		return dtype;
+	    });
+	
 	// node mouse event
 	let endpoint = epBrowser.endpoint;
 	if(epBrowser.outerEpFlag && epBrowser.outerEp && epBrowser.outerEp.match(/^https*:\/\//)) endpoint = epBrowser.outerEp;
@@ -1643,6 +1661,7 @@ var epBrowser = epBrowser || {
 		off_click: {},
 		off_click_inv: {}
 	    };
+	    if(json[i].o_sample.datatype) obj.datatype = json[i].o_sample.datatype;
 	    if(inverse) obj.predicate = "inv-" + obj.predicate;
 	    if(epBrowser.addPointIndex[0]) obj.x = epBrowser.addPointIndex[0];
 	    if(epBrowser.addPointIndex[1]) obj.y = epBrowser.addPointIndex[1];

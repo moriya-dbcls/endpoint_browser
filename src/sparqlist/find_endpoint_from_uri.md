@@ -1,6 +1,7 @@
-# find_endpoint_from_uri
+# find_endpoint_from_uri (for SPARQL support: Endpoint browser)
 
-Yamamoto's find endpoint API
+* Yamamoto's find endpoint API from instance URI
+* for Endpoint browser (https://sparql-support.dbcls.jp/endpoint-browser.html)
 
 ## parameters
 

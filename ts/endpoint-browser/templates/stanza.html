@@ -115,24 +115,45 @@ rect.node {
     ry: 8px;
 }
 
+rect.literal_type_box {
+    stroke: none;
+    fill: black;
+    width: 16px;
+    height: 40px;
+    x: 64px;
+    y: -20px;
+}
+
+text.literal_type {
+    stroke: none;
+    fill: white;
+    font-size: 10px;
+    font-style: italic;
+    font-weight: bold;
+    text-anchor: middle;
+}
+
 rect.node_class {
-    fill: #fff5bf;
+    fill: #fff4c3;
 }
 
 rect.node_uri {
-    fill: #ffd29e;
+    fill: #ffce9f;
 }
 
 rect.node_literal {
-    fill: #ffbeb5;
+    fill: #f8cecc;
+    rx: 0px;
+    ry: 0px;
 }
 
 rect.node_bnode {
-    fill: #dddddd;
+    fill: #dfdfdf;
+    stroke-dasharray: 6 6;
 }
 
 rect.node_class_l {
-    fill: #fffae0;
+    fill: #fffbe0;
 }
 
 rect.node_uri_l {
@@ -140,11 +161,14 @@ rect.node_uri_l {
 }
 
 rect.node_literal_l {
-    fill: #ffddd9;
+    fill: #fed3d2;
+    rx: 0px;
+    ry: 0px;
 }
 
 rect.node_bnode_l {
     fill: #f4f4f4;
+    stroke-dasharray: 6 6;
 }
 
 rect.node_red {
