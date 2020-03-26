@@ -1,8 +1,11 @@
 # Endpoint browser
-[SPARQList](https://github.com/dbcls/sparqlist) and [togostanza](https://github.com/togostanza/ts) for [endpoint browser](https://sparql-support.dbcls.jp/endpoint-browser.html)
+[Endpoint browser](https://sparql-support.dbcls.jp/endpoint-browser.html) is a web service to search RDF data in the endpoint using visualised network graph. User can select nodes and execute SPARQL queries from the GUI.
+
+![alt](https://sparql-support.dbcls.jp/file/ep_browser.png)
 
 ## install to local
-for private loocalhost-endpoint
+* for private loocalhost-endpoint
+* req. [SPARQList](https://github.com/dbcls/sparqlist) and [togostanza](https://github.com/togostanza/ts)
 
     $ git clone https://github.com/moriya-dbcls/endpoint_browser.git
     $ cd endpoint_browser
