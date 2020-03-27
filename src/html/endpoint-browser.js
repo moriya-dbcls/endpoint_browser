@@ -1112,34 +1112,10 @@ var epBrowser = epBrowser || {
 	    epBrowser.nodeRemoveMode = false;
 	    epBrowser.outerEpFlag = false;
 
-	    if(text == "browsing"){
-		reDrawGraph();
-	    }else if(text == "subgraph to SPARQL"){
-		reDrawGraph();
-		epBrowser.subgraphMode = true;
-		epBrowser.selectSubGraphMode(renderDiv);
-	    }else if(text == "remove node"){  //// remove node
-		epBrowser.nodeRemoveMode = true;
-		reDrawGraph();
-		let node_g = svg.selectAll(".node_mouse_eve_g");
-		node_g.on("click", function(d){ epBrowser.removeGraphData(renderDiv, param, d); })
-		    .on("mouseover", function(d){ 
-			if(d.child){
-			    let childs = svg.selectAll(".parent_" + d.id);
-			    childs.selectAll("rect.node").attr("class", function(d){ return "node node_" + d.node_type + " node_red";} );
-			    childs.selectAll("path").attr("class", "edge edge_red").attr("marker-end", "url(#arrowhead_red)");
-			}else{
-			    if(d.id > 0){
-				d3.select(this).select("rect").attr("class", function(d){ return "node node_" + d.node_type + " node_red";} );
-				svg.select("#edge_" + d.predicate_id).attr("class", "edge edge_red").attr("marker-end", "url(#arrowhead_red)");
-			    }
-			} })
-		    .on("mouseout", function(){
-			svg.selectAll(".node").attr("class", function(d){ return "node node_" + d.node_type;} );
-			svg.selectAll(".edge").attr("class", function(d){return "edge edge_" + d.edge_type; })
-			    .attr("marker-end", function(d){ return "url(#arrowhead_" + d.edge_type + ")"; }) })
-		    .style("cursor", "pointer");
-	    }
+	    if(text == "subgraph to SPARQL") epBrowser.subgraphMode = true;
+	    if(text == "remove node") epBrowser.nodeRemoveMode = true;
+	    
+	    reDrawGraph();
 	    changeModeSwitchColor(g, true);
 	}
 
@@ -1410,6 +1386,30 @@ var epBrowser = epBrowser || {
 		epBrowser.simulation.alpha(.2);
 		epBrowser.simulation.restart();
 	    }
+
+	    // mode check
+	    if(epBrowser.subgraphMode){  //// subgraph mode
+		epBrowser.selectSubGraphMode(renderDiv);
+	    }else if(epBrowser.nodeRemoveMode){  //// remove mode
+		let node_g = svg.selectAll(".node_mouse_eve_g");
+		node_g.on("click", function(d){ epBrowser.removeGraphData(renderDiv, param, d); })
+		    .on("mouseover", function(d){ 
+			if(d.child){
+			    let childs = svg.selectAll(".parent_" + d.id);
+			    childs.selectAll("rect.node").attr("class", function(d){ return "node node_" + d.node_type + " node_red";} );
+			    childs.selectAll("path").attr("class", "edge edge_red").attr("marker-end", "url(#arrowhead_red)");
+			}else{
+			    if(d.id > 0){
+				d3.select(this).select("rect").attr("class", function(d){ return "node node_" + d.node_type + " node_red";} );
+				svg.select("#edge_" + d.predicate_id).attr("class", "edge edge_red").attr("marker-end", "url(#arrowhead_red)");
+			    }
+			} })
+		    .on("mouseout", function(){
+			svg.selectAll(".node").attr("class", function(d){ return "node node_" + d.node_type;} );
+			svg.selectAll(".edge").attr("class", function(d){return "edge edge_" + d.edge_type; })
+			    .attr("marker-end", function(d){ return "url(#arrowhead_" + d.edge_type + ")"; }) })
+		    .style("cursor", "pointer");
+	    }
 	}
 	
 	// temporaly mode change by key press
@@ -1621,11 +1621,16 @@ var epBrowser = epBrowser || {
 
 	// replace type label of select node (for multi type)
 	if(!inverse && json[0].p.value == epBrowser.rdfType && json[0].c){
-	    epBrowser.graphData.nodes[epBrowser.selectNode].class = json[0].c.value;
-	    epBrowser.graphData.nodes[epBrowser.selectNode].class_type = json[0].c.type;
-	    if(json[0].c_label){
-		epBrowser.graphData.nodes[epBrowser.selectNode].class_label = json[0].c_label.value;
-		epBrowser.graphData.nodes[epBrowser.selectNode].class_label_type = json[0].c_label.type;
+	    for(let elm of epBrowser.graphData.nodes){
+		if(elm.id == epBrowser.selectNode){
+		    elm.class = json[0].c.value;
+		    elm.class_type = json[0].c.type;
+		    if(json[0].c_label){
+			elm.class_label = json[0].c_label.value;
+			elm.class_label_type = json[0].c_label.type;
+		    }
+		    break;
+		}
 	    }
 	}
 
@@ -1820,7 +1825,7 @@ var epBrowser = epBrowser || {
 	}
 //	console.log(epBrowser.graphData);
 //	console.log(newData);
-
+	
 	if(newData.nodes[0]) epBrowser.graphData = newData;
     },
     
