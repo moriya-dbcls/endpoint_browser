@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.0.13
+// version: 0.0.14
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.0.13",
+    version: "0.0.14",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -1118,7 +1118,7 @@ var epBrowser = epBrowser || {
 		reDrawGraph();
 		epBrowser.subgraphMode = true;
 		epBrowser.selectSubGraphMode(renderDiv);
-	    }else if(text == "remove node"){
+	    }else if(text == "remove node"){  //// remove node
 		epBrowser.nodeRemoveMode = true;
 		reDrawGraph();
 		let node_g = svg.selectAll(".node_mouse_eve_g");
@@ -1126,7 +1126,7 @@ var epBrowser = epBrowser || {
 		    .on("mouseover", function(d){ 
 			if(d.child){
 			    let childs = svg.selectAll(".parent_" + d.id);
-			    childs.selectAll("rect").attr("class", function(d){ return "node node_" + d.node_type + " node_red";} );
+			    childs.selectAll("rect.node").attr("class", function(d){ return "node node_" + d.node_type + " node_red";} );
 			    childs.selectAll("path").attr("class", "edge edge_red").attr("marker-end", "url(#arrowhead_red)");
 			}else{
 			    if(d.id > 0){
