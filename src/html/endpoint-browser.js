@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.1.4
+// version: 0.1.5
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.1.4",
+    version: "0.1.5",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -1396,7 +1396,7 @@ var epBrowser = epBrowser || {
     makeButton: function(renderDiv, param){
 	let svg = renderDiv.select("svg");
 	let box = svg.append("g").attr("id", "browser_setting").attr("transform", "translate(50,20)");
-	box.append("rect").attr("width", "900px").attr("height", "50px").attr("fill", "#ffffff").attr("fill-opacity", "0.7");;
+	box.append("rect").attr("id", "ctrl_background").attr("width", "900px").attr("height", "80px").attr("fill", "#ffffff").attr("fill-opacity", "0.8");
 	let opt = box.append("g").attr("id", "browsing_option").attr("transform", "translate(0,28)").style("display", "none");
 	let ctrl = box.append("g").attr("id", "graph_control").attr("transform", "translate(0,28)");
 	let optionalSearchFlag = false;
@@ -1424,10 +1424,12 @@ var epBrowser = epBrowser || {
 		    renderDiv.select("#browsing_option").style("display", "none");
 		    box.select("#graph_control").attr("transform", "translate(0,28)");
 		    renderDiv.select("#outer_ep_box").remove();
+		    box.select("#ctrl_background").attr("height", "80px");
 		}else if(!epBrowser.subgraphMode && !epBrowser.nodeRemoveMode){
 		    optionalSearchFlag = true;
 		    opt.style("display", "block");
 		    ctrl.attr("transform", "translate(0,56)");
+		    box.select("#ctrl_background").attr("height", "110px");
 		}
 	    });
 	box.append("text").attr("x", 225).attr("y", 15).text(")").attr("font-size", "11px");
@@ -2311,7 +2313,7 @@ var epBrowser = epBrowser || {
 	}
 	if(f == 0){
 	    if(uri.match(/^urn:/)){
-		[ , prefix, postfix] = uri.match(/^urn:(\w+):(.+)/);
+		[ , prefix, postfix] = uri.match(/^urn:(\w+):(.*)/);
 		prefix_uri = "urn:" + prefix + ":";
 	    }else{
 		prefix = "p" + epBrowser.prefixCount;

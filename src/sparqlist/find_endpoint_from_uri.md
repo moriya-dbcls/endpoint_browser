@@ -22,7 +22,10 @@ async ({uri, object}) => {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     };
-     let res = fetch(api, options).then(res=>res.json());
+     let res = fetch(api, options).then(res=>{
+       if(res.ok) return res.json();
+       else return {response: false};
+     });
      return res;
    }
   let params = ["rows=20", "fl=id,score,sparqlEndpoint", "wt=json"];
@@ -32,7 +35,7 @@ async ({uri, object}) => {
   let pe = [];
   for(let i = 0; i < elements.length; i++){
     if(i == 0) q += "+hostNames:" + elements[i] + " ";
-    else pe.push(i + "_" + elements[i]); 
+    else pe.push(i + "_" + encodeURIComponent(elements[i])); 
   }
   if(pe[0]) q += "+pathElements:(" + pe.join(" ") + ")";
   if(object == "true") q += "\n+isObject:true";
