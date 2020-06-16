@@ -2017,7 +2017,7 @@ var epBrowser = epBrowser || {
     },
     
     addGraphData: function(api_json){
-	//console.log(api_json);
+	// console.log(api_json);
 	let json = api_json.data;
 
 	if(!json[0]) return 0;
@@ -2036,8 +2036,9 @@ var epBrowser = epBrowser || {
 	// replace blank node ID for childs
 	if(json[0].s.type == "bnode" && epBrowser.graphData.nodes[epBrowser.selectNode]) epBrowser.graphData.nodes[epBrowser.selectNode].key = json[0].s.value;
 
-	// hub node check
-	if(epBrowser.graphData.nodes[epBrowser.selectNode]) epBrowser.graphData.nodes[epBrowser.selectNode].child_count = json.length;
+	// hub node check (+1 for each edge push)
+	let hub_node = epBrowser.graphData.nodes[epBrowser.selectNode];
+	if(hub_node && !hub_node.child_count) hub_node.child_count = 0;
 
 	// replace type label of select node (for multi type)
 	if(!inverse && json[0].p.value == epBrowser.rdfType && json[0].c){
@@ -2132,6 +2133,7 @@ var epBrowser = epBrowser || {
 		    //// add edge
 		    //  data.edges.push({id: edgeId, source: epBrowser.selectNode, target: nodeKey2id[obj.key], predicate: json[i].p.value,  predicate_label: epBrowser.uriToShort(json[i].p.value), count: json[i].o_count.value});
 		    //	edgeId++;
+		    // 	if(hub_node) hub_node.child_count++;
 		    //// don't add edge, add predicate label
 		    let flag = 1;
 		    let add_predicate = epBrowser.uriToShort(json[i].p.value);
@@ -2162,6 +2164,7 @@ var epBrowser = epBrowser || {
 			    }
 			}
 			edgeId++;
+			if(hub_node) hub_node.child_count++;
 		    }
 		    edgeList[edge_key] = 1;
 		}
@@ -2173,6 +2176,7 @@ var epBrowser = epBrowser || {
 		edgeST2id[source + "_" + target] = edgeId;
 		nodeId++;
 		edgeId++;
+		if(hub_node) hub_node.child_count++;
 		if((obj.key.match(/^http:\/\/identifiers.org\//) || obj.key.match(/^http:\/\/purl\./)) && !epBrowser.endpointList[obj.key]){
 		    let url = epBrowser.api + epBrowser.findEndpointApi;
 		    epBrowser.fetchReq("post", url, false, {"apiArg": ["uri=" + encodeURIComponent(obj.key)]}, epBrowser.addEndpointToUri);
