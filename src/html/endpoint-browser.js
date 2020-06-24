@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.1.5
+// version: 0.1.6
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.1.5",
+    version: "0.1.6",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -38,8 +38,17 @@ var epBrowser = epBrowser || {
 	    options.headers = { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json'};
 	    options.mode = 'cors';
 	}
+	// set timeout of fetch
+	let fetch_timeout = function(ms, promise) {
+            return new Promise(function(resolve, reject) {
+                setTimeout(function() {
+                    reject(new Error("timeout"))
+                }, ms)
+                promise.then(resolve, reject)
+            })
+        };
 	try{
-	    let res = fetch(url, options).then(res=>{
+	    let res = fetch_timeout(600000, fetch(url, options)).then(res=>{
 		if(res.ok) return res.json();
 		else return false;
 	    });
@@ -116,9 +125,8 @@ var epBrowser = epBrowser || {
 	param.height = 800;
 	param.cx = param.width / 2;
 	param.cy = param.height / 2;
-
+	
 	epBrowser.endpoint = stanza_params["endpoint"];
-	if(stanza_params["entry"].match(/^https*:\/\/.+/)) epBrowser.prefix[":"] = stanza_params["entry"].match(/(.+[\/#:])[^\/#:]+$/)[1];
 	
 	// make DOM
 	//// SVG DOM
@@ -303,6 +311,9 @@ var epBrowser = epBrowser || {
 	    Object.assign(epBrowser.prefix, epBrowser.prefixCustom);
 	    Object.assign(epBrowser.prefixTemp, epBrowser.prefixCustom);
 	}
+
+	// mk prefix for entry
+	if(json[0].s.value.match(/^https*:\/\/.+/)) epBrowser.uriToShort(json[0].s.value);
 	
 	//// add data
 	epBrowser.clickableFlag = true;
@@ -345,8 +356,6 @@ var epBrowser = epBrowser || {
 	let simulation = epBrowser.simulation;
 	let svg = renderDiv.select('svg');
 	let url = epBrowser.api + epBrowser.getLinksApi;
-	    
-//	console.log(JSON.stringify(epBrowser.graphData));
 	
 	let edges_layer = svg.select(".edges_layer");
 	let edges_label_layer = svg.select(".edges_label_layer");
@@ -987,7 +996,7 @@ var epBrowser = epBrowser || {
     startSimulation: function(edge, edge_label, node_g){
 	let simulation = epBrowser.simulation;
 	let data = epBrowser.graphData;
-
+	
 	if(epBrowser.nodeGridFlag){
 	    simulation.nodes(data.nodes)
 		.force("link", d3.forceLink(data.edges).id(d => d.id).distance(5000).strength(0).iterations(7))
@@ -1011,9 +1020,10 @@ var epBrowser = epBrowser || {
 	
 //	simulation.force("link")
 //	    .links(data.edges);
-	
 	simulation.on("tick", ticked);
-
+	if(simulation.alpha() < 0.001) simulation.alpha(0.005)
+	simulation.restart();
+	
 	// element position
 	function ticked() {
 	    // edge
@@ -1438,7 +1448,7 @@ var epBrowser = epBrowser || {
 	makeBrowseOpt(240, "federated search", optFederated);
 	
 	makeSwitch(80, "property", propertySwitch);
-	makeSwitch(220, "RDF config", prefixListSwitch);
+	makeSwitch(220, "RDF-config", prefixListSwitch);
 	makeSwitch(376, "layer arrangement", gridGraphSwitch);
 	makeSwitch(596, "force sim.", forceSwitch, true);
 	makeSwitch(744, "scroll zoom", zoomSwitch, true);
