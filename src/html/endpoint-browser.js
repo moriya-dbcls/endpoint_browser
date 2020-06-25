@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.1.6
+// version: 0.1.7
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.1.6",
+    version: "0.1.7",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -190,7 +190,7 @@ var epBrowser = epBrowser || {
 	    if(value == "download"){
 		rdfConfig.select("#rdf_conf_form_endpoint").attr("value", "endpoint: " + epBrowser.endpoint);
 		rdfConfig.select("#rdf_conf_form_prefix").attr("value", rdfConfig.select("#rdf_config_prefix").html().replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">"));
-		rdfConfig.select("#rdf_conf_form_model").attr("value", rdfConfig.select("#rdf_config_model").html().replace(/> cardinality </g, "><").replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">"))
+		rdfConfig.select("#rdf_conf_form_model").attr("value", rdfConfig.select("#rdf_config_model").html().replace(/> cardinality </g, "><").replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">").replace(/ +\{\{deploy subject\}\}/, ""));
 		rdfConfig.select("#rdf_conf_form_sparql").attr("value", rdfConfig.select("#rdf_config_sparql").html());
 		rdfConfig.select("#download_form").node().submit();
 	    }else{
@@ -730,6 +730,15 @@ var epBrowser = epBrowser || {
 	    return var_name;
 	}
 
+	let snakeToCamel = function(snake){
+	    let words = snake.split(/_/);
+	    let camel = "";
+	    for(let word of words){
+		camel += word.charAt(0).toUpperCase() + word.slice(1);
+	    }
+	    return camel;
+	}
+
 	let getRdfConfClass = function(node, indent){
 	    let config = "";
 	    if(node.classes && node.classes.length > 1){
@@ -799,7 +808,7 @@ var epBrowser = epBrowser || {
 			    short_object_uri = tmp[1] + ":<span class='rdf_conf_new_subject' alt='" + node.id + "'>" + tmp[2] + "</span>";
 			}else if(node.rdf_conf_subject == 1){
 			    let tmp = object.match(/^(<span.+>)(.+)(<\/span>)$/);
-			    short_object_uri = tmp[1] + tmp[2].charAt(0).toUpperCase() + tmp[2].slice(1) + tmp[3];
+			    short_object_uri = tmp[1] + snakeToCamel(tmp[2]) + tmp[3];
 			}
 			config += short_object_uri + object_label + "\n";
 		    }else if(node.type.match("literal")){
@@ -813,7 +822,7 @@ var epBrowser = epBrowser || {
 			if(object_name.match(/^node_\d+$/) || object_name == pre_object_name) object_name = undefined;
 			let tmp = getRdfConfLeafObject(node.id, nest + 1, object_name, false);
 			if(tmp) config += tmp;
-			else config += indent + "    - " + object + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{blank node}}</span>\n";
+			else config += indent + "    - " + object + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{deploy blank node}}</span>\n";
 		    }
 		}
 	    }
@@ -832,12 +841,12 @@ var epBrowser = epBrowser || {
 		let subject = getRdfConfVarName(node);
 		let tmp = subject.match(/^(<span.+>)(.+)(<\/span>)$/);
 		sparql_subject.push(tmp[2]);
-		subject = tmp[1] + tmp[2].charAt(0).toUpperCase() + tmp[2].slice(1) + tmp[3];
+		subject = tmp[1] + snakeToCamel(tmp[2]) + tmp[3];
 		if(node.class || id == 0){
 		    ids.push(id);
 		    rdfConf[id] = "- " + subject;
-		    if(node.off_click[epBrowser.endpoint]) rdfConf[id] += " &lt;" + node.key + "&gt;:\n";
-		    else rdfConf[id] += " <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>&lt;" + node.key + "&gt;</span>:\n";
+		    if(node.off_click[epBrowser.endpoint]) rdfConf[id] += " " + epBrowser.uriToShort(node.key, '', 1) + ":\n";
+		    else rdfConf[id] += " " + epBrowser.uriToShort(node.key, '', 1) + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{deploy subject}}</span>\n";
 		    rdfConf[id] += getRdfConfClass(node, "");
 		}
 		let leaf = getRdfConfLeafObject(id, 0, false, subject);
@@ -857,12 +866,12 @@ var epBrowser = epBrowser || {
 	//// on click
 	renderDiv.selectAll(".rdf_conf_undef").style("color", "red");
 	renderDiv.selectAll(".rdf_conf_comment").style("color", "darkgoldenrod");
-	renderDiv.selectAll(".rdf_conf_clickable").style("color", "dodgerblue").style("cursor", "pointer")
+	renderDiv.selectAll(".rdf_conf_clickable").style("color", "darkorchid").style("font-weight", "bold").style("cursor", "pointer")
 	    .on("click", function(){
 		let tmp = d3.select(this).attr("alt").split("_");
 		renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + tmp[0]).on("click")(data.nodes[tmp[1]]); });
 	renderDiv.selectAll(".rdf_conf_prefix")
-	    .style("color", "#f50").style("font-weight", "bold").style("cursor", "pointer")
+	    .style("color", "darkorange").style("font-weight", "bold").style("cursor", "pointer")
 	    .on("click", function(){
 		let prefix_tmp = d3.select(this).text();
 		let mouse = d3.mouse(d3.select('body').node());
@@ -891,7 +900,7 @@ var epBrowser = epBrowser || {
 		input.attr("value", prefix_tmp);
 	    });
 	renderDiv.selectAll(".rdf_conf_node_name")
-	    .style("color", "#f50").style("font-weight", "bold").style("cursor", "pointer")
+	    .style("color", "darkorange").style("font-weight", "bold").style("cursor", "pointer")
 	    .on("click", function(){
 		let node_name_tmp = d3.select(this).text();
 		let id = d3.select(this).attr("alt");
@@ -957,7 +966,7 @@ var epBrowser = epBrowser || {
 		});
 	    });
 	renderDiv.selectAll(".rdf_conf_new_subject")
-	    .style("color", "olivedrab").style("cursor", "pointer")
+	    .style("color", "olivedrab").style("font-weight", "bold").style("cursor", "pointer")
 	    .on("click", function(){
 		let id = d3.select(this).attr("alt");
 		let mouse = d3.mouse(d3.select('body').node());
