@@ -190,7 +190,7 @@ var epBrowser = epBrowser || {
 	    if(value == "download"){
 		rdfConfig.select("#rdf_conf_form_endpoint").attr("value", "endpoint: " + epBrowser.endpoint);
 		rdfConfig.select("#rdf_conf_form_prefix").attr("value", rdfConfig.select("#rdf_config_prefix").html().replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">"));
-		rdfConfig.select("#rdf_conf_form_model").attr("value", rdfConfig.select("#rdf_config_model").html().replace(/> cardinality </g, "><").replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">").replace(/ +\{\{deploy subject\}\}/, ""));
+		rdfConfig.select("#rdf_conf_form_model").attr("value", rdfConfig.select("#rdf_config_model").html().replace(/> cardinality </g, "><").replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">").replace(/ +\{\{expand subject\}\}/, ""));
 		rdfConfig.select("#rdf_conf_form_sparql").attr("value", rdfConfig.select("#rdf_config_sparql").html());
 		rdfConfig.select("#download_form").node().submit();
 	    }else{
@@ -822,7 +822,7 @@ var epBrowser = epBrowser || {
 			if(object_name.match(/^node_\d+$/) || object_name == pre_object_name) object_name = undefined;
 			let tmp = getRdfConfLeafObject(node.id, nest + 1, object_name, false);
 			if(tmp) config += tmp;
-			else config += indent + "    - " + object + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{deploy blank node}}</span>\n";
+			else config += indent + "    - " + object + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand blank node}}</span>\n";
 		    }
 		}
 	    }
@@ -846,7 +846,7 @@ var epBrowser = epBrowser || {
 		    ids.push(id);
 		    rdfConf[id] = "- " + subject;
 		    if(node.off_click[epBrowser.endpoint]) rdfConf[id] += " " + epBrowser.uriToShort(node.key, '', 1) + ":\n";
-		    else rdfConf[id] += " " + epBrowser.uriToShort(node.key, '', 1) + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{deploy subject}}</span>\n";
+		    else rdfConf[id] += " " + epBrowser.uriToShort(node.key, '', 1) + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand subject}}</span>\n";
 		    rdfConf[id] += getRdfConfClass(node, "");
 		}
 		let leaf = getRdfConfLeafObject(id, 0, false, subject);
