@@ -4,7 +4,7 @@
 ![alt](https://sparql-support.dbcls.jp/file/ep_browser.png)
 
 ## install to local
-* for private loocalhost-endpoint
+* for private loocalhost-endpoint ([Endpoint browser](https://sparql-support.dbcls.jp/endpoint-browser.html) service page is available for open access endpoints.)
 * req. [SPARQList](https://github.com/dbcls/sparqlist) and [togostanza](https://github.com/togostanza/ts)
 
 ```
