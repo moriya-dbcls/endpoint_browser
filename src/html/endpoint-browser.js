@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.1.7
+// version: 0.1.8
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.1.7",
+    version: "0.1.8",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -53,7 +53,7 @@ var epBrowser = epBrowser || {
 		else return false;
 	    });
 	    res.then(function(json){
-		if(renderDiv) epBrowser.loading.remove(svg, gid);
+		if(renderDiv) epBrowser.loading.remove(svg, gid, param, json);
 		if(json) callback(json, renderDiv, param);
 		if(renderDiv) clearInterval(loadingTimer);
 	    });
@@ -78,11 +78,13 @@ var epBrowser = epBrowser || {
 	    let data = [{x: wc - 40, c: 1}, {x: wc - 20, c: 2}, {x: wc, c: 3}, {x: wc + 20, c: 4}];
 	    let svg = renderDiv.select("svg");
 	    let g = svg.append("g").attr("id", "l" + gid);
+	    g.append("rect").attr("x", wc - 80).attr("y", hc - 10).attr("width", 140).attr("height", 60)
+		.attr("fill", "#ffffff").attr("opacity", 0.8).attr("display", "none").attr("id", gid + "_bg");
 	    g.selectAll("circle")
 		.data(data)
 		.enter()
 		.append("circle")
-		.attr("fill", "#888888")
+		.attr("fill", "#2f7dad")
 		.attr("id", function(d){ return gid + "_" + d.c; })
 		.attr("cx", function(d){ return d.x; })
 		.attr("cy", hc - 10 + 30).attr("r", 0);
@@ -91,14 +93,26 @@ var epBrowser = epBrowser || {
 	anime: function(svg, gid, hc){
 	    let f = this.frame;
 	    let g = svg.select("#l" + gid);
+	    g.select("#" + gid + "_bg").attr("display", "inline");
+	    console.log(g.select("rect"));
 	    if(f == 0) g.selectAll("circle").transition().duration(240).attr("r", 8);
 	    else if(f <= 4) g.select("#" + gid + "_" + f)
 		.transition().duration(120).attr("cy", hc - 10 + 18)
 		.transition().duration(120).attr("cy", hc - 10 + 35);
 	    else g.selectAll("circle").transition().duration(240).attr("r", 0);
 	},
-	remove: function(svg, gid){
-	    svg.select("#l" + gid).remove();
+	remove: function(svg, gid, param, json){
+	    let g = svg.select("#l" + gid);
+	    if(json.data && json.data[0]){
+		g.remove();
+	    }else{
+		let message = "No leaves";
+		if(!json) message = "endpoint error";
+		g.selectAll("circle").remove();
+		g.select("#" + gid + "_bg").attr("display", "inline");
+		g.append("text").attr("x", param.width / 2).attr("y", param.height / 2 + 25).attr("fill", "#888888").attr("text-anchor", "middle").text(message);
+		setTimeout(function(){  g.remove(); }, 2000);
+	    }
 	},
 	error: function(svg, gid, center){
 	    let g = svg.select("#l" + gid);
@@ -144,6 +158,7 @@ var epBrowser = epBrowser || {
 	let edges_label_layer = g.append('g').attr("class", "edges_label_layer");
 	let nodes_layer = g.append('g').attr("class", "nodes_layer");
 	let pop_edge_label = g.append('text').attr("id", "popup_label");
+	let pop_mouse_eve_label = g.append('text').attr("id", "popup_mouse_event_label").attr("text-anchor", "middle").attr("font-size", "16");
 	epBrowser.makeButton(renderDiv, param);
 	g.append("g").attr("id", "popup_control");
 	svg.append("g").attr("id", "prefix_g");
@@ -365,6 +380,8 @@ var epBrowser = epBrowser || {
 	let node_g = nodes_layer.selectAll(".node_g");
 
 //	console.log(data);
+
+	svg.select("#popup_mouse_event_label").attr("display", "none");
 	
 	// add
 	edge_g = edge_g.data(data.edges, function(d) { return d.id; });
@@ -595,11 +612,21 @@ var epBrowser = epBrowser || {
 		if(epBrowser.clickableFlag){
 		    d3.select(this).select("rect")
                         .attr("class", function(d){
-                            if(epBrowser.inverseFlag) return "node node_" + d.node_type + " hover_inverse";
-                            else return "node node_" + d.node_type + " hover";
+			//    epBrowser.stopSimulation();
+			    let mouse_eve_label = svg.select("#popup_mouse_event_label").text("expand").attr("display", "inline")
+				.attr("x", d.x).attr("y", d.y - 26);
+                            if(epBrowser.inverseFlag){
+				mouse_eve_label.text("inverse expand").attr("class", "eve_hover_inverse");
+				return "node node_" + d.node_type + " hover_inverse";
+                            }else{
+				mouse_eve_label.text("expand").attr("class", "eve_hover");
+				return "node node_" + d.node_type + " hover";
+			    }
 			})
 		} })
 	    .on("mouseout", function(){
+	//	epBrowser.startSimulation(edge, edge_label, node_g);
+		svg.select("#popup_mouse_event_label").attr("display", "none");
 		d3.select(this).select("rect").attr("class", function(d){ return "node node_" + d.node_type; });
 	    })
 	    .style("cursor", "pointer");
@@ -660,7 +687,7 @@ var epBrowser = epBrowser || {
 	
 	// node drag
 	function dragstarted(d) {
-	    if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+	    if(!d3.event.active) simulation.alphaTarget(0.3).restart();
 	    if(!epBrowser.nodeGridFlag) d.fx = d.x;
 	    d.fy = d.y;
 	}
