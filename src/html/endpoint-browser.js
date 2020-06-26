@@ -94,7 +94,6 @@ var epBrowser = epBrowser || {
 	    let f = this.frame;
 	    let g = svg.select("#l" + gid);
 	    g.select("#" + gid + "_bg").attr("display", "inline");
-	    console.log(g.select("rect"));
 	    if(f == 0) g.selectAll("circle").transition().duration(240).attr("r", 8);
 	    else if(f <= 4) g.select("#" + gid + "_" + f)
 		.transition().duration(120).attr("cy", hc - 10 + 18)
