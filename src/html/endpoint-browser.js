@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.1.8
+// version: 0.1.9
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.1.8",
+    version: "0.1.9",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -220,7 +220,7 @@ var epBrowser = epBrowser || {
 	rdfConfig.append("pre").attr("id", "rdf_config_stanza");
 	rdfConfig.selectAll("pre").style("margin", "20px").style("display", "none");
 	rdfConfigPrefix.style("display", "block");
-	let form = rdfConfig.append("form").attr("id", "download_form").attr("action", "/file/dl/download.php").attr("method", "post").style("display", "none");
+	let form = rdfConfig.append("form").attr("id", "download_form").attr("action", "https://sparql-support.dbcls.jp/file/dl/download.php").attr("method", "post").style("display", "none");
 	form.append("input").attr("type", "hidden").attr("name", "endpoint").attr("id", "rdf_conf_form_endpoint");
 	form.append("input").attr("type", "hidden").attr("name", "prefix").attr("id", "rdf_conf_form_prefix");
 	form.append("input").attr("type", "hidden").attr("name", "model").attr("id", "rdf_conf_form_model");
