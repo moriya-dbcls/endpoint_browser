@@ -1,0 +1,26 @@
+version: "3"
+services:
+  sparqlist:
+    image: dbcls/sparqlist:snapshot-c2ee6ec
+    container_name: sparqlist
+    environment:
+      PORT: 3000
+      ADMIN_PASSWORD: admin
+      ROOT_PATH: "/"
+    networks:
+      - default
+    ports:
+      - 3000:3000
+    volumes:
+      - ${PWD}/src/sparqlist/endpoint_browser_links.md:/app/repository/endpoint_browser_links.md
+      - ${PWD}/src/sparqlist/find_endpoint_from_uri.md:/app/repository/find_endpoint_from_uri.md
+      - ${PWD}/src/html:/app/public/html
+  endpoint_browser:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: endpoint_browser
+    networks:
+      - default
+    ports:
+      - 8080:8080
