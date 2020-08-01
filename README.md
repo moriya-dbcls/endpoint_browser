@@ -37,7 +37,7 @@ v12.x by [nodebre](https://github.com/hokaccha/nodebrew)
 download binary from [ts release](https://github.com/togostanza/ts/releases) and set a path to 'ts' file
 
 ```
-    $ curl -O https://github.com/togostanza/ts/releases/download/v0.0.19/ts_0.0.19_linux_amd64.tar.gz
+    $ curl -OL https://github.com/togostanza/ts/releases/download/v0.0.19/ts_0.0.19_linux_amd64.tar.gz
     $ tar zxvf ts_0.0.19_linux_amd64.tar.gz
     [set a path to 'ts']
 ```
@@ -57,7 +57,7 @@ download binary from [ts release](https://github.com/togostanza/ts/releases) and
     $ PORT=3000 ADMIN_PASSWORD=changeme npm start &
     $ cd ..
 ```
-    
+
 #### start ts
 
 ```
@@ -68,11 +68,35 @@ download binary from [ts release](https://github.com/togostanza/ts/releases) and
 #### start endpoint browser
 http://localhost:3000/html/
 
-## Opt. 
-hard-coded port num and directory name 
+## Opt.
+hard-coded port num and directory name
 
 ```
     ts/endpoint-browser/_header.html:2 src="//localhost:3000/html/endpoint-browser.js"
     sparqlist/public/html/index.html:7 href="//localhost:8080/stanza/endpoint-browser/"
     sparqlist/public/html/endpoint-browser.js:11 api: "//localhost:3000/api/"
+```
+
+## Run Endpoint browser via Docker
+
+### Prerequisites
+
+-   [Docker](https://docs.docker.com/get-docker/)
+-   [Docker-compose](https://docs.docker.com/compose/install/)
+
+### Usage
+
+Run containers with `docker-compose` and open `http://localhost:3000/html`.
+
+```
+    $ git clone https://github.com/moriya-dbcls/endpoint_browser.git
+    $ cd endpoint_browser
+    $ docker-compose up --build -d
+```
+
+Stop containers
+
+```
+    $ cd endpoint_browser
+    $ docker-compose down
 ```
