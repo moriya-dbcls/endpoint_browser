@@ -37,7 +37,7 @@ v12.x by [nodebre](https://github.com/hokaccha/nodebrew)
 download binary from [ts release](https://github.com/togostanza/ts/releases) and set a path to 'ts' file
 
 ```
-    $ curl -O https://github.com/togostanza/ts/releases/download/v0.0.19/ts_0.0.19_linux_amd64.tar.gz
+    $ curl -OL https://github.com/togostanza/ts/releases/download/v0.0.19/ts_0.0.19_linux_amd64.tar.gz
     $ tar zxvf ts_0.0.19_linux_amd64.tar.gz
     [set a path to 'ts']
 ```
@@ -57,7 +57,7 @@ download binary from [ts release](https://github.com/togostanza/ts/releases) and
     $ PORT=3000 ADMIN_PASSWORD=changeme npm start &
     $ cd ..
 ```
-    
+
 #### start ts
 
 ```
@@ -68,8 +68,8 @@ download binary from [ts release](https://github.com/togostanza/ts/releases) and
 #### start endpoint browser
 http://localhost:3000/html/
 
-## Opt. 
-hard-coded port num and directory name 
+## Opt.
+hard-coded port num and directory name
 
 ```
     ts/endpoint-browser/_header.html:2 src="//localhost:3000/html/endpoint-browser.js"
