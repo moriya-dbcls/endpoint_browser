@@ -3,6 +3,30 @@
 
 ![alt](https://sparql-support.dbcls.jp/file/ep_browser.png)
 
+## Run Endpoint browser via Docker
+
+### Prerequisites
+
+-   [Docker](https://docs.docker.com/get-docker/)
+-   [Docker-compose](https://docs.docker.com/compose/install/)
+
+### Usage
+
+Run containers with `docker-compose` and open `http://localhost:3000/html`.
+
+```
+    $ git clone https://github.com/moriya-dbcls/endpoint_browser.git
+    $ cd endpoint_browser
+    $ docker-compose up --build -d
+```
+
+Stop containers
+
+```
+    $ cd endpoint_browser
+    $ docker-compose down
+```
+
 ## install to local
 * for private loocalhost-endpoint ([Endpoint browser](https://sparql-support.dbcls.jp/endpoint-browser.html) service page is available for open access endpoints.)
 * req. [SPARQList](https://github.com/dbcls/sparqlist) and [togostanza](https://github.com/togostanza/ts)
@@ -75,28 +99,4 @@ hard-coded port num and directory name
     ts/endpoint-browser/_header.html:2 src="//localhost:3000/html/endpoint-browser.js"
     sparqlist/public/html/index.html:7 href="//localhost:8080/stanza/endpoint-browser/"
     sparqlist/public/html/endpoint-browser.js:11 api: "//localhost:3000/api/"
-```
-
-## Run Endpoint browser via Docker
-
-### Prerequisites
-
--   [Docker](https://docs.docker.com/get-docker/)
--   [Docker-compose](https://docs.docker.com/compose/install/)
-
-### Usage
-
-Run containers with `docker-compose` and open `http://localhost:3000/html`.
-
-```
-    $ git clone https://github.com/moriya-dbcls/endpoint_browser.git
-    $ cd endpoint_browser
-    $ docker-compose up --build -d
-```
-
-Stop containers
-
-```
-    $ cd endpoint_browser
-    $ docker-compose down
 ```
