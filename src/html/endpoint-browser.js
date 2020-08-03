@@ -1,6 +1,5 @@
-
 // name:    SPARQL support: Endpoint browser
-// version: 0.1.9
+// version: 0.1.10
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -8,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.1.9",
+    version: "0.1.10",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -1328,7 +1327,7 @@ var epBrowser = epBrowser || {
 	    html += "PREFIX <span class='sparql_prefix'>" + keys[i] + ":</span> <span class='sparql_uri'>&lt;" + epBrowser.prefix[keys[i]] + "&gt;</span>\n";
 	}
 	//// raw query
-	query += "PREFIX : <" + epBrowser.prefix[":"] + ">\n";
+	// query += "PREFIX : <" + epBrowser.prefix[":"] + ">\n";
 	query += "SELECT DISTINCT " + Object.keys(vars).join(" ") + "\n";
 	query += "WHERE {\n";
 	query += mkQuery(triples, blanks, 0)[0];
@@ -1339,7 +1338,7 @@ var epBrowser = epBrowser || {
 	}
 	query += "}\n";
 	//// html format query
-	html += "PREFIX <span class='sparql_prefix'>:</span> <span class='sparql_uri'>&lt;" + epBrowser.prefix[":"] + "&gt;</span>\n";
+	// html += "PREFIX <span class='sparql_prefix'>:</span> <span class='sparql_uri'>&lt;" + epBrowser.prefix[":"] + "&gt;</span>\n";
 	html += "SELECT DISTINCT <span style='color:#1680c4'>" + Object.keys(vars).join(" ") + "</span>\n";
 	html += "WHERE {\n"
 	html += mkQuery(triples, blanks, 0)[1];
