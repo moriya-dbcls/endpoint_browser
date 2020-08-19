@@ -193,7 +193,7 @@ var epBrowser = epBrowser || {
 	// rdf confiog dom
 	let rdfConfig = renderDiv.append("div").attr("id", "rdf_config").style("display", "none")
 	    .style("background-color", "#ffffff").style("border", "solid 2px #888888")
-	    .style("position", "relative").style("top", "-700px");
+	    .style("position", "relative").style("top", "-700px").style("overflow", "hidden");
 	let sel = rdfConfig.append("select").style("margin-left", "20px").style("margin-top", "10px");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "prefix").text("prefix");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "model").text("model");
@@ -819,8 +819,10 @@ var epBrowser = epBrowser || {
 		    let predicate_label = "";
 		    if(predicate.match(/[:_]\d+$/) && node.predicate_label) predicate_label = " <span class='rdf_conf_comment'># " + node.predicate_label + "</span>";
 		    if(!data.nodes[i-1] || node.subject_id != data.nodes[i-1].subject_id || node.predicate != data.nodes[i-1].predicate){
-			config += indent + "- " + predicate + cardinality + ":" + predicate_label;
-			config += " <span class='rdf_conf_cardinality' alt='" + node.id + "_" + cardinality_f + "'> cardinality </span>\n";
+		//	config += indent + "- " + predicate + cardinality + ":" + predicate_label;
+		//	config += " <span class='rdf_conf_cardinality' alt='" + node.id + "_" + cardinality_f + "'> cardinality </span>\n";
+			let tmp = predicate.match(/(.+):([^\<\>]+)/);
+			config += indent + "- " + tmp[1] + ":<span class='rdf_conf_cardinality' alt='" + node.id + "_" + cardinality_f + "'>" + tmp[2] + "</span>" + cardinality + ":" + predicate_label + "\n";
 		    }
 		    if(node.type == "uri"){
 			config += indent + "  - " + object + ": ";
@@ -958,7 +960,7 @@ var epBrowser = epBrowser || {
 		varNameDiv.select("#var_name_node_id").attr("value", id);
 	    });
 	renderDiv.selectAll(".rdf_conf_cardinality")
-	    .style("background-color", "#cccccc").style("color", "white").style("cursor", "pointer")
+	    .style("color", "saddlebrown").style("font-weight", "bold").style("cursor", "pointer")
 	    .on("click", function(){
 		let tmp = d3.select(this).attr("alt").split("_");
 		let id = tmp[0];
