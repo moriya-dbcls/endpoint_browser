@@ -834,7 +834,8 @@ var epBrowser = epBrowser || {
 			    short_object_uri = tmp[1] + ":<span class='rdf_conf_new_subject' alt='" + node.id + "'>" + tmp[2] + "</span>";
 			}else if(node.rdf_conf_subject == 1){
 			    let tmp = object.match(/^(<span.+>)(.+)(<\/span>)$/);
-			    short_object_uri = tmp[1] + snakeToCamel(tmp[2]) + tmp[3];
+			  //  short_object_uri = tmp[1] + snakeToCamel(tmp[2]) + tmp[3];  // clickable
+			    short_object_uri = snakeToCamel(tmp[2]);  // not clickable
 			}
 			config += short_object_uri + object_label + "\n";
 		    }else if(node.type.match("literal")){
