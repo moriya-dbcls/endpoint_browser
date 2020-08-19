@@ -915,7 +915,7 @@ var epBrowser = epBrowser || {
 		let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 		    .attr("size", "20").style("border", "solid 3px #888888")
 		    .on("keypress", function(){
-			let prefix_new = this.value.replace(/[^\w]/, "");
+			let prefix_new = this.value.replace(/[^\w]/g, "");
 			if(d3.event.keyCode === 13 && prefix_new && prefix_new.match(/\w+/)){
 			    prefix_new = prefix_new.match(/(\w+)/)[1];
 			    prefix_new = prefix_new.toLowerCase();
@@ -944,7 +944,7 @@ var epBrowser = epBrowser || {
 		let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 		    .attr("size", "20").style("border", "solid 3px #888888")
 		    .on("keypress", function(){
-			let var_name = this.value.replace(/[_\s]+/, "_");
+			let var_name = this.value.replace(/[_\s]+/g, "_");
 			if(d3.event.keyCode === 13 && var_name && var_name.match(/\w+/)){
 			    var_name = var_name.toLowerCase();
 			    if(!var_name.match(/^\?/)) var_name = "?" + var_name;
@@ -1205,7 +1205,7 @@ var epBrowser = epBrowser || {
 			let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 			    .attr("size", "20").style("border", "solid 3px #888888")
 			    .on("keypress", function(){
-				let var_name = this.value.replace(/[_\s]+/, "_");
+				let var_name = this.value.replace(/[_\s]+/g, "_");
 				if(d3.event.keyCode === 13 && var_name && !var_name.match(/^\?$/)){
 				    var_name = var_name.toLowerCase();
 				    if(!var_name.match(/^\?/)) var_name = "?" + var_name;
