@@ -745,7 +745,7 @@ var epBrowser = epBrowser || {
 	    let var_name = "node_" + node.id;
 	    if(node.class_label && node.class != "http://www.w3.org/2002/07/owl#Class") var_name = node.class_label.toLowerCase().replace(/ /g, "_");
 	    if(var_name.match(/^node_/) && node.key.match(/identifiers.org/)) var_name = node.key.match(/identifiers.org\/([^\/]+)/)[1];
-	    if(node.sparql_var_name) var_name = node.sparql_var_name.replace(/^\?/, "").replace(/[_\s]+/, "_");
+	    if(node.sparql_var_name) var_name = node.sparql_var_name.replace(/^\?/, "");
 	    if(subject && node.predicate == "http://www.w3.org/2000/01/rdf-schema#label") var_name = subject.toLowerCase() + "_label";
 	    if(subject && node.predicate == "http://purl.org/dc/terms/identifier") var_name = subject.toLowerCase() + "_id";
 	//    if(node.type == "uri" && node.class && node.predicate != "http://www.w3.org/2000/01/rdf-schema#seeAlso") var_name = var_name.charAt(0).toUpperCase() + var_name.slice(1);
@@ -915,7 +915,7 @@ var epBrowser = epBrowser || {
 		let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 		    .attr("size", "20").style("border", "solid 3px #888888")
 		    .on("keypress", function(){
-			let prefix_new = this.value;
+			let prefix_new = this.value.replace(/[^\w]/, "");
 			if(d3.event.keyCode === 13 && prefix_new && prefix_new.match(/\w+/)){
 			    prefix_new = prefix_new.match(/(\w+)/)[1];
 			    prefix_new = prefix_new.toLowerCase();
@@ -944,9 +944,10 @@ var epBrowser = epBrowser || {
 		let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 		    .attr("size", "20").style("border", "solid 3px #888888")
 		    .on("keypress", function(){
-			let var_name = this.value;
+			let var_name = this.value.replace(/[_\s]+/, "_");
 			if(d3.event.keyCode === 13 && var_name && var_name.match(/\w+/)){
 			    var_name = var_name.toLowerCase();
+			    if(!var_name.match(/^\?/)) var_name = "?" + var_name;
 			    epBrowser.setNodeVarName(renderDiv, id, var_name);
 			}
 			epBrowser.forcegraph(renderDiv, param);
@@ -1204,7 +1205,7 @@ var epBrowser = epBrowser || {
 			let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 			    .attr("size", "20").style("border", "solid 3px #888888")
 			    .on("keypress", function(){
-				let var_name = this.value;
+				let var_name = this.value.replace(/[_\s]+/, "_");
 				if(d3.event.keyCode === 13 && var_name && !var_name.match(/^\?$/)){
 				    var_name = var_name.toLowerCase();
 				    if(!var_name.match(/^\?/)) var_name = "?" + var_name;
