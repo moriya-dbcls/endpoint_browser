@@ -745,7 +745,7 @@ var epBrowser = epBrowser || {
 	    let var_name = "node_" + node.id;
 	    if(node.class_label && node.class != "http://www.w3.org/2002/07/owl#Class") var_name = node.class_label.toLowerCase().replace(/ /g, "_");
 	    if(var_name.match(/^node_/) && node.key.match(/identifiers.org/)) var_name = node.key.match(/identifiers.org\/([^\/]+)/)[1];
-	    if(node.sparql_var_name) var_name = node.sparql_var_name.replace(/^\?/, "");
+	    if(node.sparql_var_name) var_name = node.sparql_var_name.replace(/^\?/, "").replace(/[_\s]+/, "_");
 	    if(subject && node.predicate == "http://www.w3.org/2000/01/rdf-schema#label") var_name = subject.toLowerCase() + "_label";
 	    if(subject && node.predicate == "http://purl.org/dc/terms/identifier") var_name = subject.toLowerCase() + "_id";
 	//    if(node.type == "uri" && node.class && node.predicate != "http://www.w3.org/2000/01/rdf-schema#seeAlso") var_name = var_name.charAt(0).toUpperCase() + var_name.slice(1);
