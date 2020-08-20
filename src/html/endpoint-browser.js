@@ -869,6 +869,7 @@ var epBrowser = epBrowser || {
 		let subject = getRdfConfVarName(node);
 		let tmp = subject.match(/^(<span.+>)(.+)(<\/span>)$/);
 		sparql_subject.push(tmp[2]);
+		let snake_subject = tmp[2];
 		subject = tmp[1] + snakeToCamel(tmp[2]) + tmp[3];
 		if(node.class || id == 0){
 		    ids.push(id);
@@ -877,7 +878,7 @@ var epBrowser = epBrowser || {
 		    else rdfConf[id] += " " + epBrowser.uriToShort(node.key, '', 1) + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand subject}}</span>\n";
 		    rdfConf[id] += getRdfConfClass(node, "");
 		}
-		let leaf = getRdfConfLeafObject(id, 0, false, subject);
+		let leaf = getRdfConfLeafObject(id, 0, false, snake_subject);
 		if(leaf) rdfConf[id] += leaf;
 	    }
 	}
