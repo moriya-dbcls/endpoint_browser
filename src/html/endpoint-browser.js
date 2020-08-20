@@ -226,7 +226,6 @@ var epBrowser = epBrowser || {
 	form.append("input").attr("type", "hidden").attr("name", "model").attr("id", "rdf_conf_form_model");
 	form.append("input").attr("type", "hidden").attr("name", "sparql").attr("id", "rdf_conf_form_sparql");
 	
-	
 	// popup input DOM
 	let varNameDiv = renderDiv.append("div").attr("id", "var_name_form").style("display", "none");
 	varNameDiv.append("input").attr("id", "var_name_node_id").attr("type", "hidden");
@@ -772,7 +771,7 @@ var epBrowser = epBrowser || {
 		for(let j in node.classes){
 		    let type = epBrowser.uriToShort(node.classes[j], '', 1);
 		    let type_label = "";
-		    if(type.match(/[:_]\d+$/) && node.class_labels[j])  type_label = " <span class='rdf_conf_comment'># " + node.class_labels[j] + "</span>";
+		    if(type.match(/[:_]\d{2,}$/) && node.class_labels[j])  type_label = " <span class='rdf_conf_comment'># " + node.class_labels[j] + "</span>";
 		    config += indent + "    - " + type + type_label + "\n";
 		}
 	    }else{
@@ -780,7 +779,7 @@ var epBrowser = epBrowser || {
 		let type_label = "";
 		if(node.class){
 		    type = epBrowser.uriToShort(node.class, '', 1);
-		    if(type.match(/[:_]\d+$/) && node.class_label) type_label = " <span class='rdf_conf_comment'># " + node.class_label + "</span>";
+		    if(type.match(/[:_]\d{2,}$/) && node.class_label) type_label = " <span class='rdf_conf_comment'># " + node.class_label + "</span>";
 		}
 		config += indent + "  - a: " + type + type_label + "\n";
 	    }
@@ -817,7 +816,7 @@ var epBrowser = epBrowser || {
 		    if(node.cardinality != undefined) cardinality = node.cardinality;
 		    let predicate = epBrowser.uriToShort(node.predicate, '', 1);
 		    let predicate_label = "";
-		    if(predicate.match(/[:_]\d+$/) && node.predicate_label) predicate_label = " <span class='rdf_conf_comment'># " + node.predicate_label + "</span>";
+		    if(predicate.match(/[:_]\d{2,}$/) && node.predicate_label) predicate_label = " <span class='rdf_conf_comment'># " + node.predicate_label + "</span>";
 		    if(!data.nodes[i-1] || node.subject_id != data.nodes[i-1].subject_id || node.predicate != data.nodes[i-1].predicate){
 		//	config += indent + "- " + predicate + cardinality + ":" + predicate_label;
 		//	config += " <span class='rdf_conf_cardinality' alt='" + node.id + "_" + cardinality_f + "'> cardinality </span>\n";
@@ -828,7 +827,7 @@ var epBrowser = epBrowser || {
 			config += indent + "  - " + object + ": ";
 			let short_object_uri = epBrowser.uriToShort(node.key, '', 1);
 			let object_label = "";
-			if((short_object_uri.match(/[:_]\d+$/) || node.key.match(/[\/_#/[A-Z]*\d+$/)) && node.label) object_label = " <span class='rdf_conf_comment'># " + node.label + "</span>";
+			if((short_object_uri.match(/[:_]\d{2,}$/) || node.key.match(/[\/_#/][A-Z]*\d{2,}$/)) && node.label) object_label = " <span class='rdf_conf_comment'># " + node.label + "</span>";
 			//if(short_object_uri.match(/^:/)) config += "&lt;" + node.key + "&gt;" + object_label + "\n";
 			//else config += short_object_uri + object_label + "\n";
 			if(node.rdf_conf_subject == undefined){
@@ -944,8 +943,8 @@ var epBrowser = epBrowser || {
 		epBrowser.hidePopupInputDiv(renderDiv);
 		varNameDiv.style("position", "absolute")
 		    .style("top", mouse[1] + "px")
-		    .style("left", (mouse[0] + 20) + "px").
-		    style("display", "block");
+		    .style("left", (mouse[0] + 20) + "px")
+		    .style("display", "block");
 		let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 		    .attr("size", "20").style("border", "solid 3px #888888")
 		    .on("keypress", function(){
@@ -1042,7 +1041,7 @@ var epBrowser = epBrowser || {
 	    });
 	renderDiv.selectAll(".rdf_conf_custom_prefix").style("color", "#1680c4");
 	renderDiv.selectAll(".rdf_conf_custom_node_name").style("color", "#1680c4");
-
+	
     },
     
     startSimulation: function(edge, edge_label, node_g){
