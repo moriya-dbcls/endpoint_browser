@@ -194,7 +194,7 @@ var epBrowser = epBrowser || {
 	let rdfConfig = renderDiv.append("div").attr("id", "rdf_config").style("display", "none")
 	    .style("background-color", "#ffffff").style("border", "solid 2px #888888")
 	    .style("position", "relative").style("top", "-700px").style("overflow", "hidden");
-	let sel = rdfConfig.append("select").style("margin-left", "20px").style("margin-top", "10px");
+	let sel = rdfConfig.append("select").attr("id", "rdf_config_select").style("margin-left", "20px").style("margin-top", "10px");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "prefix").text("prefix");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "model").text("model");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "sparql").text("sparql");
@@ -905,7 +905,6 @@ var epBrowser = epBrowser || {
 		let prefix_tmp = d3.select(this).text();
 		let mouse = d3.mouse(d3.select('body').node());
 		let varNameDiv = renderDiv.select("#var_name_form");
-		console.log(varNameDiv.style("display"));
 		if(varNameDiv.style("display") == "block"){
 		    varNameDiv.style("display", "none");
 		    return 0;
@@ -919,11 +918,13 @@ var epBrowser = epBrowser || {
 		    .attr("size", "20").style("border", "solid 3px #888888")
 		    .on("keypress", function(){
 			let prefix_new = this.value.replace(/[^\w]/g, "");
-			if(d3.event.keyCode === 13 && prefix_new && prefix_new.match(/\w+/)){
+			if(d3.event.key === 'Enter' && prefix_new && prefix_new.match(/\w+/)){
 			    prefix_new = prefix_new.match(/(\w+)/)[1];
 			    prefix_new = prefix_new.toLowerCase();
 			    epBrowser.setCustomPrefix(renderDiv, param, prefix_tmp, prefix_new);
 			}
+		    }).on("keydown", function(){
+			if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
 		    });
 		input.node().focus();      // focus -> value (move coursor to end of value)
 		input.attr("value", prefix_tmp);
@@ -949,12 +950,14 @@ var epBrowser = epBrowser || {
 		    .attr("size", "20").style("border", "solid 3px #888888")
 		    .on("keypress", function(){
 			let var_name = this.value.replace(/[_\s]+/g, "_");
-			if(d3.event.keyCode === 13 && var_name && var_name.match(/\w+/)){
+			if(d3.event.key === 'Enter' && var_name && var_name.match(/\w+/)){
 			    var_name = var_name.toLowerCase();
 			    if(!var_name.match(/^\?/)) var_name = "?" + var_name;
 			    epBrowser.setNodeVarName(renderDiv, id, var_name);
 			}
 			epBrowser.forcegraph(renderDiv, param);
+		    }).on("keydown", function(){
+			if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
 		    });
 		input.node().focus();      // focus -> value (move coursor to end of value)
 		input.attr("value", node_name_tmp);
@@ -995,7 +998,10 @@ var epBrowser = epBrowser || {
 		    }
 		    cardDiv.style("display", "none");
 		    epBrowser.forcegraph(renderDiv, param);
+		}).on("keydown", function(){
+		    if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
 		});
+		select.node().focus();
 	    });
 	renderDiv.selectAll(".rdf_conf_new_subject")
 	    .style("color", "olivedrab").style("font-weight", "bold").style("cursor", "pointer")
@@ -1029,7 +1035,10 @@ var epBrowser = epBrowser || {
 		    }
 		    cardDiv.style("display", "none");
 		    epBrowser.forcegraph(renderDiv, param);
+		}).on("keydown", function(){
+		    if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
 		});
+		select.node().focus();
 	    });
 	renderDiv.selectAll(".rdf_conf_custom_prefix").style("color", "#1680c4");
 	renderDiv.selectAll(".rdf_conf_custom_node_name").style("color", "#1680c4");
@@ -1211,13 +1220,15 @@ var epBrowser = epBrowser || {
 			    .attr("size", "20").style("border", "solid 3px #888888")
 			    .on("keypress", function(){
 				let var_name = this.value.replace(/[_\s]+/g, "_");
-				if(d3.event.keyCode === 13 && var_name && !var_name.match(/^\?$/)){
+				if(d3.event.key === 'Enter' && var_name && !var_name.match(/^\?$/)){
 				    var_name = var_name.toLowerCase();
 				    if(!var_name.match(/^\?/)) var_name = "?" + var_name;
 				    let id = varNameDiv.select("#var_name_node_id").attr("value");
 				   // console.log(id + " " + var_name);
 				    epBrowser.setNodeVarName(renderDiv, id, var_name);
 				}
+			    }).on("keydown", function(){
+				if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
 			    });
 			input.node().focus();      // focus -> value (move coursor to end of value)  
 			input.attr("value", "?n" + id);
@@ -1630,7 +1641,7 @@ var epBrowser = epBrowser || {
 			    .attr("size", "80").style("border", "solid 3px #888888")
 			    .on("keypress", function(){
 				let outerEp = this.value;
-				if(d3.event.keyCode === 13 && outerEp.match(/^https*:\/\//)){
+				if(d3.event.key === 'Enter' && outerEp.match(/^https*:\/\//)){
 				    if(outerEp.match(/^https*:\/\//)){
 					epBrowser.outerEp = outerEp;
 					epBrowser.outerEpFlag = true;
@@ -1643,6 +1654,8 @@ var epBrowser = epBrowser || {
 				    epBrowser.hidePopupInputDiv(renderDiv);
 				    reDrawGraph();
 				}
+			    }).on("keydown", function(){
+				if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
 			    });
 			input.node().focus();
 			input.node().select();
@@ -1682,40 +1695,14 @@ var epBrowser = epBrowser || {
 	function prefixListSwitch(g, flag){
 	    changeSwitchColor(g, flag);
 	    if(flag){
-/*		let prefix_g = svg.select("#prefix_g");
-		let prefix_box = prefix_g.append("g").attr("id", "prefix_box");
-		let x = 190;
-		let y = 120;
-		prefix_box.append("rect").attr("width", epBrowser.maxPrefixUrlLen * 8 + 160)
-		    .attr("height", Object.keys(epBrowser.usedPrefix).length * 20 + 100)
-		    .attr("x", x).attr("y", y)
-		    .attr("fill", "#f8f8f8").attr("stroke", "#cccccc").attr("stroke-width", "3px");
-		let keys = Object.keys(epBrowser.usedPrefix);
-		let count = 0;
-		for(let i = 0; i < keys.length; i++){ // custom prefix
-		    if(epBrowser.prefixTemp[keys[i]]) makePrefixLine(prefix_box, keys[i], x, y, count++, true);
-		}
-		makePrefixLine(prefix_box, ":", x, y, count++, false);
-		for(let i = 0; i < keys.length; i++){ // fixed prefix
-		    if(!epBrowser.prefixTemp[keys[i]] && keys[i] != ":") makePrefixLine(prefix_box, keys[i], x, y, count++, false);
-		}
-		prefix_box.append("text").text("< close >").attr("x", x + 40).attr("y",  y + keys.length * 20 + 60)
-		    .attr("font-size", "13px").style("cursor", "pointer").attr("fill", "#1680c4")
-		    .on("click", function(){
-			prefixListSwitch(box.select("#prefix_list_switch_g"), false)
-		    });
-*/
 		renderDiv.select("#rdf_config").style("display", "block");
-		
+		renderDiv.select("#rdf_config_select").node().focus();
 	    }else{
-/*		svg.select("#prefix_box").remove();
-		epBrowser.hidePopupInputDiv(renderDiv);
-*/
 		renderDiv.select("#rdf_config").style("display", "none");
 	    }
 	}
 
-	function makePrefixLine(prefix_box, key, x, y, line_num, custom){
+/*	function makePrefixLine(prefix_box, key, x, y, line_num, custom){ // old code
 	    let label = key + ":";
 	    label = label.replace(/::/, ":");
 	    prefix_box.append("text").text(label).attr("id", "prefix_id_" + label)
@@ -1740,13 +1727,15 @@ var epBrowser = epBrowser || {
 			.attr("size", "20").style("border", "solid 3px #888888")
 			.on("keypress", function(){
 			    let prefix_new = this.value;
-			    if(d3.event.keyCode === 13 && prefix_new && prefix_new.match(/\w+/)){
+			    if(d3.event.key === 'Enter' && prefix_new && prefix_new.match(/\w+/)){
 				prefix_new = prefix_new.match(/(\w+)/)[1];
 				prefix_new = prefix_new.toLowerCase();
 				let id = varNameDiv.select("#var_name_node_id").attr("value");
 				textElm.text(prefix_new + ":");
 				epBrowser.setCustomPrefix(renderDiv, param, prefix_tmp, prefix_new);
 			    }
+			}).on("keydown", function(){
+			    if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
 			});
 		    input.node().focus();      // focus -> value (move coursor to end of value)
 		    input.attr("value", prefix_tmp);
@@ -1756,7 +1745,7 @@ var epBrowser = epBrowser || {
 	    prefix_box.append("text").text("<" + epBrowser.usedPrefix[key] + ">").attr("fill", "#666666")
 		.attr("font-size", "13px").attr("x", x + 120).attr("y", y + (line_num * 20) + 40);
 	}
-	
+*/
 	function zoomSwitch(g, flag){
 	    changeSwitchColor(g, flag);
 	    if(flag){
