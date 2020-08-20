@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.1.11
+// version: 0.1.12
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.1.11",
+    version: "0.1.12",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -927,6 +927,7 @@ var epBrowser = epBrowser || {
 		    });
 		input.node().focus();      // focus -> value (move coursor to end of value)
 		input.attr("value", prefix_tmp);
+		input.node().select();
 	    });
 	renderDiv.selectAll(".rdf_conf_node_name")
 	    .style("color", "darkorange").style("font-weight", "bold").style("cursor", "pointer")
@@ -957,6 +958,7 @@ var epBrowser = epBrowser || {
 		    });
 		input.node().focus();      // focus -> value (move coursor to end of value)
 		input.attr("value", node_name_tmp);
+		input.node().select(); 
 		varNameDiv.select("#var_name_node_id").attr("value", id);
 	    });
 	renderDiv.selectAll(".rdf_conf_cardinality")
@@ -1217,8 +1219,9 @@ var epBrowser = epBrowser || {
 				    epBrowser.setNodeVarName(renderDiv, id, var_name);
 				}
 			    });
-			input.node().focus();      // focus -> value (move coursor to end of value)
+			input.node().focus();      // focus -> value (move coursor to end of value)  
 			input.attr("value", "?n" + id);
+			input.node().select();
 
 			varNameDiv.select("#var_name_node_id").attr("value", id);
 		    }else return null;
@@ -1642,6 +1645,7 @@ var epBrowser = epBrowser || {
 				}
 			    });
 			input.node().focus();
+			input.node().select();
 		    });
 		outer_ep_box.append("text").attr("x", 980).attr("y", 15).text("(").attr("font-size", "11px");
 		outer_ep_box.append("text").attr("x", 990).attr("y", 15).text("clear").attr("font-size", "11px").style("cursor", "pointer").attr("fill", "#1680c4")
@@ -1746,6 +1750,7 @@ var epBrowser = epBrowser || {
 			});
 		    input.node().focus();      // focus -> value (move coursor to end of value)
 		    input.attr("value", prefix_tmp);
+		    input.node().select();
 		})
 		.style("cursor", "pointer");
 	    prefix_box.append("text").text("<" + epBrowser.usedPrefix[key] + ">").attr("fill", "#666666")
