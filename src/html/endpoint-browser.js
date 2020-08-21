@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.1.12
+// version: 0.1.13
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.1.12",
+    version: "0.1.13",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -18,6 +18,7 @@ var epBrowser = epBrowser || {
     inverseFlag: false,
     subgraphMode: false,
     removeMode: false,
+    rdfConfRenderFlag: false,
     prefixCount: 0,
     edgeZoomRate: 1,
 
@@ -710,6 +711,8 @@ var epBrowser = epBrowser || {
     makeRdfConfig: function(renderDiv, param, data){
 	//console.log(data.nodes);
 
+	let rdfConfIndex = 0;
+	
 	//// rdf config prefix
 	let rdfConfPrefix =[];
 	let keys = Object.keys(epBrowser.usedPrefix);
@@ -730,6 +733,8 @@ var epBrowser = epBrowser || {
 	}
 	// rdfConfPrefix.push(": &lt;" + epBrowser.usedPrefix[":"] + "&gt;"); // RDF-config not allow the prefix ':'
 	renderDiv.select("#rdf_config_prefix").node().innerHTML = rdfConfPrefix.join("\n");
+	renderDiv.select("#rdf_config_prefix").selectAll("span")
+	    .filter(function(){ if(!this.classList.contains("rdf_conf_comment")) this.id = "rdf_conf_index_" + rdfConfIndex++; });
 	    
 	//// rdf config model
 	let getRdfConfVarName = function(node, pre_object_name, subject){
@@ -888,161 +893,217 @@ var epBrowser = epBrowser || {
 	    config += rdfConf[ids[i]] + "\n";
 	}
 	renderDiv.select("#rdf_config_model").node().innerHTML = config;
+	renderDiv.select("#rdf_config_model").selectAll("span")
+	    .filter(function(){ if(!this.classList.contains("rdf_conf_comment")) this.id = "rdf_conf_index_" + rdfConfIndex++; });
 
 	//// rdf config sparql
 	renderDiv.select("#rdf_config_sparql").html("sparql:\n  description: SPARQL description.\n  variables: [" + sparql_subject.join(", ") + "]");
-    
+	
 	//// on click
 	renderDiv.selectAll(".rdf_conf_undef").style("color", "red");
 	renderDiv.selectAll(".rdf_conf_comment").style("color", "darkgoldenrod");
-	renderDiv.selectAll(".rdf_conf_clickable").style("color", "darkorchid").style("font-weight", "bold").style("cursor", "pointer")
+	////// expand rdf
+	let expandRdf = (element) => {
+	    let tmp = d3.select(element).attr("alt").split("_");
+	    let element_id = element.id;
+	    epBrowser.rdfConfRenderFlag = false;
+	    renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + tmp[0]).on("click")(data.nodes[tmp[1]]);
+	    let renderTimer;
+	    let focusElement = () => {
+		if(epBrowser.rdfConfRenderFlag){
+		    clearInterval(renderTimer);
+		    renderDiv.select("#" + element_id).node().focus();
+		}
+	    };
+	    renderTimer = setInterval(focusElement, 100);
+	}
+	renderDiv.selectAll(".rdf_conf_clickable").attr("tabindex", "0")
+	    .style("color", "darkorchid").style("font-weight", "bold").style("cursor", "pointer")
 	    .on("click", function(){
-		let tmp = d3.select(this).attr("alt").split("_");
-		renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + tmp[0]).on("click")(data.nodes[tmp[1]]); });
-	renderDiv.selectAll(".rdf_conf_prefix")
+		expandRdf(this);
+	    }).on("keydown", function(){
+		if(d3.event.key === 'Enter') expandRdf(this);
+	    });
+	////// edit prefix
+	let editPrefix = (element) => {
+	    let prefix_tmp = d3.select(element).text();
+	    let varNameDiv = renderDiv.select("#var_name_form");
+	    if(varNameDiv.style("display") == "block"){
+		varNameDiv.style("display", "none");
+		return 0;
+	    }
+	    epBrowser.hidePopupInputDiv(renderDiv);
+	    varNameDiv.style("position", "absolute")
+	    	.style("top", (element.getBoundingClientRect().top + pageYOffset + 14) + "px")
+		.style("left", (element.getBoundingClientRect().left + pageXOffset) + "px")
+		.style("display", "block");
+	    let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
+		.attr("size", "20").style("border", "solid 3px #888888")
+		.on("keydown", function(){
+		    let prefix_new = this.value.replace(/[^\w]/g, "");
+		    if(d3.event.key === 'Enter' && prefix_new && prefix_new.match(/\w+/)){
+			prefix_new = prefix_new.match(/(\w+)/)[1];
+			prefix_new = prefix_new.toLowerCase();
+			let element_id = element.id;
+			epBrowser.setCustomPrefix(renderDiv, param, prefix_tmp, prefix_new, true);
+			renderDiv.select("#" + element_id).node().focus();
+		    }else if(d3.event.key === 'Escape'){
+			epBrowser.hidePopupInputDiv(renderDiv, param);
+			element.focus();
+		    }
+		});
+	    input.node().focus();      // focus -> value (move coursor to end of value)
+	    input.attr("value", prefix_tmp);
+	    input.node().select();
+	};
+	renderDiv.selectAll(".rdf_conf_prefix").attr("tabindex", "0")
 	    .style("color", "darkorange").style("font-weight", "bold").style("cursor", "pointer")
 	    .on("click", function(){
-		let prefix_tmp = d3.select(this).text();
-		let mouse = d3.mouse(d3.select('body').node());
-		let varNameDiv = renderDiv.select("#var_name_form");
-		if(varNameDiv.style("display") == "block"){
-		    varNameDiv.style("display", "none");
-		    return 0;
-		}
-		epBrowser.hidePopupInputDiv(renderDiv);
-		varNameDiv.style("position", "absolute")
-		    .style("top", mouse[1] + "px")
-		    .style("left", (mouse[0] + 20) + "px")
-		    .style("display", "block");
-		let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
-		    .attr("size", "20").style("border", "solid 3px #888888")
-		    .on("keypress", function(){
-			let prefix_new = this.value.replace(/[^\w]/g, "");
-			if(d3.event.key === 'Enter' && prefix_new && prefix_new.match(/\w+/)){
-			    prefix_new = prefix_new.match(/(\w+)/)[1];
-			    prefix_new = prefix_new.toLowerCase();
-			    epBrowser.setCustomPrefix(renderDiv, param, prefix_tmp, prefix_new);
-			}
-		    }).on("keydown", function(){
-			if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
-		    });
-		input.node().focus();      // focus -> value (move coursor to end of value)
-		input.attr("value", prefix_tmp);
-		input.node().select();
+		editPrefix(this);
+	    }).on("keydown", function(){
+		if(d3.event.key === 'Enter') editPrefix(this);
 	    });
-	renderDiv.selectAll(".rdf_conf_node_name")
+	////// edit var name
+	let editVarName = (element) => {
+	    let node_name_tmp = d3.select(element).text();
+	    let id = d3.select(element).attr("alt");
+	    let varNameDiv = renderDiv.select("#var_name_form");
+	    if(varNameDiv.style("display") == "block"){
+		varNameDiv.style("display", "none");
+		return 0;
+	    }
+	    epBrowser.hidePopupInputDiv(renderDiv);
+	    varNameDiv.style("position", "absolute")
+	    	.style("top", (element.getBoundingClientRect().top + pageYOffset + 14) + "px")
+		.style("left", (element.getBoundingClientRect().left + pageXOffset) + "px")
+		.style("display", "block");
+	    let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
+		.attr("size", "20").style("border", "solid 3px #888888")
+		.on("keydown", function(){
+		    let var_name = this.value.replace(/[_\s]+/g, "_");
+		    if(d3.event.key === 'Enter' && var_name && var_name.match(/\w+/)){
+			var_name = var_name.toLowerCase();
+			if(!var_name.match(/^\?/)) var_name = "?" + var_name;
+			let element_id = element.id;
+			epBrowser.setNodeVarName(renderDiv, id, var_name);
+			renderDiv.select("#" + element_id).node().focus();
+		    }else if(d3.event.key === 'Escape') {
+			epBrowser.hidePopupInputDiv(renderDiv, param);
+			element.focus();
+		    }
+		});
+	    input.node().focus();      // focus -> value (move coursor to end of value)
+	    input.attr("value", node_name_tmp);
+	    input.node().select(); 
+	    varNameDiv.select("#var_name_node_id").attr("value", id);
+	};
+	renderDiv.selectAll(".rdf_conf_node_name").attr("tabindex", "0")
 	    .style("color", "darkorange").style("font-weight", "bold").style("cursor", "pointer")
 	    .on("click", function(){
-		let node_name_tmp = d3.select(this).text();
-		let id = d3.select(this).attr("alt");
-		let mouse = d3.mouse(d3.select('body').node());
-		let varNameDiv = renderDiv.select("#var_name_form");
-		if(varNameDiv.style("display") == "block"){
-		    varNameDiv.style("display", "none");
-		    return 0;
-		}
-		epBrowser.hidePopupInputDiv(renderDiv);
-		varNameDiv.style("position", "absolute")
-		    .style("top", mouse[1] + "px")
-		    .style("left", (mouse[0] + 20) + "px")
-		    .style("display", "block");
-		let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
-		    .attr("size", "20").style("border", "solid 3px #888888")
-		    .on("keypress", function(){
-			let var_name = this.value.replace(/[_\s]+/g, "_");
-			if(d3.event.key === 'Enter' && var_name && var_name.match(/\w+/)){
-			    var_name = var_name.toLowerCase();
-			    if(!var_name.match(/^\?/)) var_name = "?" + var_name;
-			    epBrowser.setNodeVarName(renderDiv, id, var_name);
-			}
-			epBrowser.forcegraph(renderDiv, param);
-		    }).on("keydown", function(){
-			if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
-		    });
-		input.node().focus();      // focus -> value (move coursor to end of value)
-		input.attr("value", node_name_tmp);
-		input.node().select(); 
-		varNameDiv.select("#var_name_node_id").attr("value", id);
+		editVarName(this);
+	    }).on("keydown", function(){
+		if(d3.event.key === 'Enter') editVarName(this);
 	    });
-	renderDiv.selectAll(".rdf_conf_cardinality")
+	////// edit cardinality
+	let editCardinality = (element) => {
+	    let tmp = d3.select(element).attr("alt").split("_");
+	    let predicate = d3.select(element).text();
+	    let id = tmp[0];
+	    let flag = tmp[1];
+	    let cardDiv = renderDiv.select("#rdf_conf_card_div");
+	    if(cardDiv.style("display") == "block"){
+		cardDiv.style("display", "none");
+		return 0;
+	    }
+	    epBrowser.hidePopupInputDiv(renderDiv);
+	    cardDiv.style("position", "absolute")
+	    	.style("top", (element.getBoundingClientRect().top + pageYOffset + 14) + "px")
+		.style("left", (element.getBoundingClientRect().left + pageXOffset) + "px")
+		.style("display", "block");
+	    cardDiv.selectAll(".rdf_conf_card_opt").remove();
+	    let select = cardDiv.select("#rdf_conf_card_select");
+	    select.append("option").attr("class", "rdf_conf_card_opt").text("select");
+	    if(flag == 0) select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "").text(predicate);
+	    select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "+").text(predicate + " +");
+	    if(flag == 0) select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "?").text(predicate + " ?");
+	    select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "*").text(predicate + " *");
+	    select.on("change", function(d){
+		let value = this.value;
+		for(let i in data.nodes){
+		    if(data.nodes[i].id == id){
+			data.nodes[i].cardinality = value;
+			break;
+		    }
+		}
+		cardDiv.style("display", "none");
+		let element_id = element.id;
+		epBrowser.forcegraph(renderDiv, param);
+		renderDiv.select("#" + element_id).node().focus();
+	    }).on("keydown", function(){
+		if(d3.event.key === 'Escape'){
+		    epBrowser.hidePopupInputDiv(renderDiv, param);
+		    element.focus();
+		}
+	    });
+	    select.node().focus();
+	};
+	renderDiv.selectAll(".rdf_conf_cardinality").attr("tabindex", "0")
 	    .style("color", "saddlebrown").style("font-weight", "bold").style("cursor", "pointer")
 	    .on("click", function(){
-		let tmp = d3.select(this).attr("alt").split("_");
-		let id = tmp[0];
-		let flag = tmp[1];
-		let mouse = d3.mouse(d3.select('body').node());
-		let cardDiv = renderDiv.select("#rdf_conf_card_div");
-		if(cardDiv.style("display") == "block"){
-		    cardDiv.style("display", "none");
-		    return 0;
-		}
-		epBrowser.hidePopupInputDiv(renderDiv);
-		cardDiv.style("position", "absolute")
-		    .style("top", mouse[1] + "px")
-		    .style("left", (mouse[0] + 20) + "px").
-		    style("display", "block");
-		cardDiv.selectAll(".rdf_conf_card_opt").remove();
-		let select = cardDiv.select("#rdf_conf_card_select");
-		select.append("option").attr("class", "rdf_conf_card_opt").text("select");
-		if(flag == 0) select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "").text(" ");
-		select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "+").text("+");
-		if(flag == 0) select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "?").text("?");
-		select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "*").text("*");
-		select.on("change", function(d){
-		    let value = this.value;
+		editCardinality(this);
+	    }).on("keydown", function(){
+		if(d3.event.key === 'Enter') editCardinality(this);
+	    });
+	////// set new subject
+	let setNewSubject = (element) => {
+	    let id = d3.select(element).attr("alt");
+	    let cardDiv = renderDiv.select("#rdf_conf_card_div");
+	    if(cardDiv.style("display") == "block"){
+		cardDiv.style("display", "none");
+		return 0;
+	    }
+	    epBrowser.hidePopupInputDiv(renderDiv);
+	    cardDiv.style("position", "absolute")
+	    	.style("top", (element.getBoundingClientRect().top + pageYOffset + 14) + "px")
+		.style("left", (element.getBoundingClientRect().left + pageXOffset) + "px")
+		.style("display", "block");
+	    cardDiv.selectAll(".rdf_conf_card_opt").remove();
+	    let select = cardDiv.select("#rdf_conf_card_select");
+	    select.append("option").attr("class", "rdf_conf_card_opt").text("select");
+	    select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "1").text("new subject");
+	    select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "0").text("object");
+	    select.on("change", function(d){
+		let value = this.value;
+		if(value == 1){
 		    for(let i in data.nodes){
 			if(data.nodes[i].id == id){
-			    data.nodes[i].cardinality = value;
+			    data.nodes[i].rdf_conf_subject = value;
 			    break;
 			}
 		    }
-		    cardDiv.style("display", "none");
-		    epBrowser.forcegraph(renderDiv, param);
-		}).on("keydown", function(){
-		    if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
-		});
-		select.node().focus();
+		}
+		cardDiv.style("display", "none");
+		let element_id = element.id;
+		epBrowser.forcegraph(renderDiv, param);
+		renderDiv.select("#" + element_id).node().focus();
+	    }).on("keydown", function(){
+		if(d3.event.key === 'Escape'){
+		    epBrowser.hidePopupInputDiv(renderDiv, param);
+		    element.focus();
+		}
 	    });
-	renderDiv.selectAll(".rdf_conf_new_subject")
+	    select.node().focus();
+	}
+	renderDiv.selectAll(".rdf_conf_new_subject").attr("tabindex", "0")
 	    .style("color", "olivedrab").style("font-weight", "bold").style("cursor", "pointer")
 	    .on("click", function(){
-		let id = d3.select(this).attr("alt");
-		let mouse = d3.mouse(d3.select('body').node());
-		let cardDiv = renderDiv.select("#rdf_conf_card_div");
-		if(cardDiv.style("display") == "block"){
-		    cardDiv.style("display", "none");
-		    return 0;
-		}
-		epBrowser.hidePopupInputDiv(renderDiv);
-		cardDiv.style("position", "absolute")
-		    .style("top", mouse[1] + "px")
-		    .style("left", (mouse[0] + 20) + "px").
-		    style("display", "block");
-		cardDiv.selectAll(".rdf_conf_card_opt").remove();
-		let select = cardDiv.select("#rdf_conf_card_select");
-		select.append("option").attr("class", "rdf_conf_card_opt").text("select");
-		select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "1").text("new subject");
-		select.append("option").attr("class", "rdf_conf_card_opt").attr("value", "0").text("object");
-		select.on("change", function(d){
-		    let value = this.value;
-		    if(value == 1){
-			for(let i in data.nodes){
-			    if(data.nodes[i].id == id){
-				data.nodes[i].rdf_conf_subject = value;
-				break;
-			    }
-			}
-		    }
-		    cardDiv.style("display", "none");
-		    epBrowser.forcegraph(renderDiv, param);
-		}).on("keydown", function(){
-		    if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
-		});
-		select.node().focus();
+		setNewSubject(this);
+	    }).on("keydown", function(){
+		if(d3.event.key === 'Enter') setNewSubject(this);
 	    });
 	renderDiv.selectAll(".rdf_conf_custom_prefix").style("color", "#1680c4");
 	renderDiv.selectAll(".rdf_conf_custom_node_name").style("color", "#1680c4");
-	
+	epBrowser.rdfConfRenderFlag = true;
     },
     
     startSimulation: function(edge, edge_label, node_g){
