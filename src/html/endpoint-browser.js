@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.1.13
+// version: 0.2.0
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.1.13",
+    version: "0.2.0",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -199,14 +199,17 @@ var epBrowser = epBrowser || {
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "prefix").text("prefix");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "model").text("model");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "sparql").text("sparql");
+	sel.append("option").attr("class", "rdf_config_switch").attr("value", "rdf-conf-chk").text("--senbero");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "download").text("* download");
 	sel.on("change", function(){
 	    let value = this.value;
-	    if(value == "download"){
+	    if(value == "download" || value == "rdf-conf-chk"){
 		rdfConfig.select("#rdf_conf_form_endpoint").attr("value", "endpoint: " + epBrowser.endpoint);
 		rdfConfig.select("#rdf_conf_form_prefix").attr("value", rdfConfig.select("#rdf_config_prefix").html().replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">"));
 		rdfConfig.select("#rdf_conf_form_model").attr("value", rdfConfig.select("#rdf_config_model").html().replace(/> cardinality </g, "><").replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">").replace(/ +\{\{expand subject\}\}/, ""));
 		rdfConfig.select("#rdf_conf_form_sparql").attr("value", rdfConfig.select("#rdf_config_sparql").html());
+		if(value == "rdf-conf-chk") rdfConfig.select("#download_form").attr("action", "https://sparql-support.dbcls.jp/file/dl/rdf-conf-chk.php").attr("target", "check_model");
+		else  rdfConfig.select("#download_form").attr("action", "https://sparql-support.dbcls.jp/file/dl/download.php").attr("target", "");
 		rdfConfig.select("#download_form").node().submit();
 	    }else{
 		rdfConfig.selectAll("pre").style("display", "none");
