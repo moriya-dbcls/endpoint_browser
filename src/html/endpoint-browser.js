@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.2.0
+// version: 0.2.1
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.2.0",
+    version: "0.2.1",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -21,6 +21,7 @@ var epBrowser = epBrowser || {
     rdfConfRenderFlag: false,
     prefixCount: 0,
     edgeZoomRate: 1,
+    rdfConfSelectIndex: 0,
 
     fetchReq: function(method, url, renderDiv, param, callback){
 	//console.log(url);
@@ -197,7 +198,7 @@ var epBrowser = epBrowser || {
 	    .style("position", "relative").style("top", "-700px").style("overflow", "hidden");
 	let sel = rdfConfig.append("select").attr("id", "rdf_config_select").style("margin-left", "20px").style("margin-top", "10px");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "prefix").text("prefix");
-	sel.append("option").attr("class", "rdf_config_switch").attr("value", "model").text("model");
+	sel.append("option").attr("class", "rdf_config_switch").attr("value", "model").text("model").attr("id", "rdf_conf_select_opt_model");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "sparql").text("sparql");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "rdf-conf-chk").text("--senbero");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "download").text("* download");
@@ -211,9 +212,11 @@ var epBrowser = epBrowser || {
 		if(value == "rdf-conf-chk") rdfConfig.select("#download_form").attr("action", "https://sparql-support.dbcls.jp/file/dl/rdf-conf-chk.php").attr("target", "check_model");
 		else  rdfConfig.select("#download_form").attr("action", "https://sparql-support.dbcls.jp/file/dl/download.php").attr("target", "");
 		rdfConfig.select("#download_form").node().submit();
+		rdfConfig.select("#rdf_config_select").node().selectedIndex = epBrowser.rdfConfSelectIndex;
 	    }else{
 		rdfConfig.selectAll("pre").style("display", "none");
 		rdfConfig.select("#rdf_config_" + value).style("display", "block");
+		epBrowser.rdfConfSelectIndex = rdfConfig.select("#rdf_config_select").node().selectedIndex;
 	    }
 	});
 	rdfConfig.append("pre").attr("id", "rdf_config_endpoint");
