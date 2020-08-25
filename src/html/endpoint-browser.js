@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.2.1
+// version: 0.2.2
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.2.1",
+    version: "0.2.2",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -22,6 +22,7 @@ var epBrowser = epBrowser || {
     prefixCount: 0,
     edgeZoomRate: 1,
     rdfConfSelectIndex: 0,
+    prefixCc404: [],
 
     fetchReq: function(method, url, renderDiv, param, callback){
 	//console.log(url);
@@ -145,7 +146,7 @@ var epBrowser = epBrowser || {
 	
 	// make DOM
 	//// SVG DOM
-	let renderDiv = d3.select(renderDivId);
+	let renderDiv = d3.select(renderDivId).style("position", "relative");
 	let svg = renderDiv.append("svg")
 	    .attr("id", "epBrowser_svg")
 	    .attr("width", param.width)
@@ -193,9 +194,12 @@ var epBrowser = epBrowser || {
 		window.open(url, "ss_target");
 	    });
 	// rdf confiog dom
+	let rdfConfigWidth = renderDiv.node().offsetWidth;
+	if(rdfConfigWidth > 1000) rdfConfigWidth = 1000;
 	let rdfConfig = renderDiv.append("div").attr("id", "rdf_config").style("display", "none")
 	    .style("background-color", "#ffffff").style("border", "solid 2px #888888")
-	    .style("position", "relative").style("top", "-700px").style("overflow", "hidden");
+	    .style("position", "absolute").style("top", "120px").style("width", rdfConfigWidth + "px").style("max-height", "750px")
+	    .style("overflow", "hidden scroll").style("resize", "both");
 	let sel = rdfConfig.append("select").attr("id", "rdf_config_select").style("margin-left", "20px").style("margin-top", "10px");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "prefix").text("prefix");
 	sel.append("option").attr("class", "rdf_config_switch").attr("value", "model").text("model").attr("id", "rdf_conf_select_opt_model");
@@ -333,11 +337,11 @@ var epBrowser = epBrowser || {
 	}
 
 	// mk prefix for entry
-	if(json[0].s.value.match(/^https*:\/\/.+/)) epBrowser.uriToShort(json[0].s.value);
+	if(json[0].s.value.match(/^https*:\/\/.+/)) epBrowser.uriToShort(json[0].s.value, false, false, renderDiv, param);
 	
 	//// add data
 	epBrowser.clickableFlag = true;
-	epBrowser.addGraphData(api_json);
+	epBrowser.addGraphData(api_json, renderDiv, param);
 	epBrowser.forcegraph(renderDiv, param);
     },
 
@@ -355,7 +359,7 @@ var epBrowser = epBrowser || {
 	renderDiv.select("#inverse_label_g").select("text").attr("fill", "#c6c6c6");
 	//epBrowser.usedPrefix = {};
 	epBrowser.maxPrefixUrlLen = 0;
-	epBrowser.addGraphData(api_json);
+	epBrowser.addGraphData(api_json, renderDiv, param);
 	if(api_json.inv == 2){
 	    for(let i = 0; i < param.apiArg.length; i++){
 		if(param.apiArg[i].match(/^inv=/)){
@@ -494,7 +498,7 @@ var epBrowser = epBrowser || {
 		let text = "";
 		if(d.type.match(/literal/)) text = d.key;
 		else if(d.class_label) text = d.class_label;
-		else if(d.predicate != epBrowser.rdfType && d.class) text = epBrowser.uriToShort(d.class);
+		else if(d.predicate != epBrowser.rdfType && d.class) text = epBrowser.uriToShort(d.class, false, false, renderDiv, param);
 		return truncate(text, 20);
 	    })
 	    .attr("class", "node_label")
@@ -507,13 +511,13 @@ var epBrowser = epBrowser || {
 			let text = "";
 			if(d.type.match(/literal/)) text = d.key;
 			else if(d.class_label) text = d.class_label;
-			else if(d.predicate != epBrowser.rdfType && d.class) text = epBrowser.uriToShort(d.class);
+			else if(d.predicate != epBrowser.rdfType && d.class) text = epBrowser.uriToShort(d.class, false, false, renderDiv, param);
 			if(text.length > 23) return text;
 		    }).style("display", "block"); })
 	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); })
 	node_mouse_eve.append("text")
 	    .filter(function(d) { return d.type == "uri"; })
-	    .text(function(d) { return truncate(epBrowser.uriToShort(d.key), 20); })
+	    .text(function(d) { return truncate(epBrowser.uriToShort(d.key, false, false, renderDiv, param), 20); })
 	    .attr("class", "node_label")
 	    .attr("dx", "0px")
 	    .attr("dy", "12px")
@@ -729,7 +733,7 @@ var epBrowser = epBrowser || {
 	});
 	for(let i = 0; i < keys.length; i++){ // custom prefix
 	    if(epBrowser.prefixTemp[keys[i]]){
-		rdfConfPrefix.push(epBrowser.uriToShort(epBrowser.prefixTemp[keys[i]], "", 1) + " &lt;" + epBrowser.prefixTemp[keys[i]] + "&gt;");
+		rdfConfPrefix.push(epBrowser.uriToShort(epBrowser.prefixTemp[keys[i]], false, 1, renderDiv, param) + " &lt;" + epBrowser.prefixTemp[keys[i]] + "&gt;");
 	    }
 	}
 	for(let i = 0; i < keys.length; i++){ // fixed prefix
@@ -780,7 +784,7 @@ var epBrowser = epBrowser || {
 	    if(node.classes && node.classes.length > 1){
 		config += indent + "  - a:\n";
 		for(let j in node.classes){
-		    let type = epBrowser.uriToShort(node.classes[j], '', 1);
+		    let type = epBrowser.uriToShort(node.classes[j], false, 1, renderDiv, param);
 		    let type_label = "";
 		    if(type.match(/[:_]\d{2,}$/) && node.class_labels[j])  type_label = " <span class='rdf_conf_comment'># " + node.class_labels[j] + "</span>";
 		    config += indent + "    - " + type + type_label + "\n";
@@ -789,7 +793,7 @@ var epBrowser = epBrowser || {
 		let type = "<span class='rdf_conf_undef'>{{undefined}}</span>";
 		let type_label = "";
 		if(node.class){
-		    type = epBrowser.uriToShort(node.class, '', 1);
+		    type = epBrowser.uriToShort(node.class, false, 1, renderDiv, param);
 		    if(type.match(/[:_]\d{2,}$/) && node.class_label) type_label = " <span class='rdf_conf_comment'># " + node.class_label + "</span>";
 		}
 		config += indent + "  - a: " + type + type_label + "\n";
@@ -825,7 +829,7 @@ var epBrowser = epBrowser || {
 			cardinality_f = 1;
 		    }
 		    if(node.cardinality != undefined) cardinality = node.cardinality;
-		    let predicate = epBrowser.uriToShort(node.predicate, '', 1);
+		    let predicate = epBrowser.uriToShort(node.predicate, false, 1, renderDiv, param);
 		    let predicate_label = "";
 		    if(predicate.match(/[:_]\d{2,}$/) && node.predicate_label) predicate_label = " <span class='rdf_conf_comment'># " + node.predicate_label + "</span>";
 		    if(!data.nodes[i-1] || node.subject_id != data.nodes[i-1].subject_id || node.predicate != data.nodes[i-1].predicate){
@@ -836,7 +840,7 @@ var epBrowser = epBrowser || {
 		    }
 		    if(node.type == "uri"){
 			config += indent + "  - " + object + ": ";
-			let short_object_uri = epBrowser.uriToShort(node.key, '', 1);
+			let short_object_uri = epBrowser.uriToShort(node.key, false, 1, renderDiv, param);
 			let object_label = "";
 			if((short_object_uri.match(/[:_]\d{2,}$/) || node.key.match(/[\/_#/][A-Z]*\d{2,}$/)) && node.label) object_label = " <span class='rdf_conf_comment'># " + node.label + "</span>";
 			//if(short_object_uri.match(/^:/)) config += "&lt;" + node.key + "&gt;" + object_label + "\n";
@@ -885,8 +889,8 @@ var epBrowser = epBrowser || {
 		if(node.class || id == 0){
 		    ids.push(id);
 		    rdfConf[id] = "- " + subject;
-		    if(node.off_click[epBrowser.endpoint]) rdfConf[id] += " " + epBrowser.uriToShort(node.key, '', 1) + ":\n";
-		    else rdfConf[id] += " " + epBrowser.uriToShort(node.key, '', 1) + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand subject}}</span>\n";
+		    if(node.off_click[epBrowser.endpoint]) rdfConf[id] += " " + epBrowser.uriToShort(node.key, false, 1, renderDiv, param) + ":\n";
+		    else rdfConf[id] += " " + epBrowser.uriToShort(node.key, false, 1, renderDiv, param) + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand subject}}</span>\n";
 		    rdfConf[id] += getRdfConfClass(node, "");
 		}
 		let leaf = getRdfConfLeafObject(id, 0, false, snake_subject);
@@ -908,6 +912,11 @@ var epBrowser = epBrowser || {
 	//// on click
 	renderDiv.selectAll(".rdf_conf_undef").style("color", "red");
 	renderDiv.selectAll(".rdf_conf_comment").style("color", "darkgoldenrod");
+	let setPopupPosition = (popup, element) => {
+	    popup.style("position", "absolute")
+	    	.style("top", (element.getBoundingClientRect().top + pageYOffset - renderDiv.node().offsetTop + 14) + "px")
+		.style("left", (element.getBoundingClientRect().left + pageXOffset - renderDiv.node().offsetLeft) + "px");
+	}
 	////// expand rdf
 	let expandRdf = (element) => {
 	    let tmp = d3.select(element).attr("alt").split("_");
@@ -939,10 +948,8 @@ var epBrowser = epBrowser || {
 		return 0;
 	    }
 	    epBrowser.hidePopupInputDiv(renderDiv);
-	    varNameDiv.style("position", "absolute")
-	    	.style("top", (element.getBoundingClientRect().top + pageYOffset + 14) + "px")
-		.style("left", (element.getBoundingClientRect().left + pageXOffset) + "px")
-		.style("display", "block");
+	    varNameDiv.style("display", "block");
+	    setPopupPosition(varNameDiv, element);
 	    let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 		.attr("size", "20").style("border", "solid 3px #888888")
 		.on("keydown", function(){
@@ -951,7 +958,7 @@ var epBrowser = epBrowser || {
 			prefix_new = prefix_new.match(/(\w+)/)[1];
 			prefix_new = prefix_new.toLowerCase();
 			let element_id = element.id;
-			epBrowser.setCustomPrefix(renderDiv, param, prefix_tmp, prefix_new, true);
+			epBrowser.setCustomPrefix(renderDiv, param, prefix_tmp, prefix_new);
 			renderDiv.select("#" + element_id).node().focus();
 		    }else if(d3.event.key === 'Escape'){
 			epBrowser.hidePopupInputDiv(renderDiv, param);
@@ -979,10 +986,8 @@ var epBrowser = epBrowser || {
 		return 0;
 	    }
 	    epBrowser.hidePopupInputDiv(renderDiv);
-	    varNameDiv.style("position", "absolute")
-	    	.style("top", (element.getBoundingClientRect().top + pageYOffset + 14) + "px")
-		.style("left", (element.getBoundingClientRect().left + pageXOffset) + "px")
-		.style("display", "block");
+	    varNameDiv.style("display", "block");
+	    setPopupPosition(varNameDiv, element);
 	    let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 		.attr("size", "20").style("border", "solid 3px #888888")
 		.on("keydown", function(){
@@ -1022,10 +1027,8 @@ var epBrowser = epBrowser || {
 		return 0;
 	    }
 	    epBrowser.hidePopupInputDiv(renderDiv);
-	    cardDiv.style("position", "absolute")
-	    	.style("top", (element.getBoundingClientRect().top + pageYOffset + 14) + "px")
-		.style("left", (element.getBoundingClientRect().left + pageXOffset) + "px")
-		.style("display", "block");
+	    cardDiv.style("display", "block");
+	    setPopupPosition(cardDiv, element);
 	    cardDiv.selectAll(".rdf_conf_card_opt").remove();
 	    let select = cardDiv.select("#rdf_conf_card_select");
 	    select.append("option").attr("class", "rdf_conf_card_opt").text("select");
@@ -1046,7 +1049,7 @@ var epBrowser = epBrowser || {
 		epBrowser.forcegraph(renderDiv, param);
 		renderDiv.select("#" + element_id).node().focus();
 	    }).on("keydown", function(){
-		if(d3.event.key === 'Escape'){
+		if(d3.event.key === 'Escape' || d3.event.key === 'Enter'){
 		    epBrowser.hidePopupInputDiv(renderDiv, param);
 		    element.focus();
 		}
@@ -1069,10 +1072,8 @@ var epBrowser = epBrowser || {
 		return 0;
 	    }
 	    epBrowser.hidePopupInputDiv(renderDiv);
-	    cardDiv.style("position", "absolute")
-	    	.style("top", (element.getBoundingClientRect().top + pageYOffset + 14) + "px")
-		.style("left", (element.getBoundingClientRect().left + pageXOffset) + "px")
-		.style("display", "block");
+	    cardDiv.style("display", "block");
+	    setPopupPosition(cardDiv, element);
 	    cardDiv.selectAll(".rdf_conf_card_opt").remove();
 	    let select = cardDiv.select("#rdf_conf_card_select");
 	    select.append("option").attr("class", "rdf_conf_card_opt").text("select");
@@ -1093,7 +1094,7 @@ var epBrowser = epBrowser || {
 		epBrowser.forcegraph(renderDiv, param);
 		renderDiv.select("#" + element_id).node().focus();
 	    }).on("keydown", function(){
-		if(d3.event.key === 'Escape'){
+		if(d3.event.key === 'Escape' || d3.event.key === 'Enter'){
 		    epBrowser.hidePopupInputDiv(renderDiv, param);
 		    element.focus();
 		}
@@ -1341,7 +1342,7 @@ var epBrowser = epBrowser || {
 		    triple.subject = variant;
 		    if(nodes[0].sparql_label == "var") vars[variant] = 1;
 		}else{
-		    triple.subject = epBrowser.uriToShort(nodes[0].key);
+		    triple.subject = epBrowser.uriToShort(nodes[0].key, false, false, renderDiv, param);
 		}
 		triple.subjectType = nodes[0].sparql_label;
 		//// property path
@@ -1352,8 +1353,8 @@ var epBrowser = epBrowser || {
 			p = p.replace(/^inv-/, "");
 			hat = "^";
 		    }
-		    predicates.push(hat + epBrowser.uriToShort(p, 1));
-		    predicates_html.push(hat + "<span style='color:#db7d25'>" + epBrowser.uriToShort(p, 1) + "</span>");
+		    predicates.push(hat + epBrowser.uriToShort(p, 1, false, renderDiv, param));
+		    predicates_html.push(hat + "<span style='color:#db7d25'>" + epBrowser.uriToShort(p, 1, false, renderDiv, param) + "</span>");
 		    p_ids[nodes[j].predicate_id] = 1;
 		}
 		if(data.nodes[i].predicate){
@@ -1363,8 +1364,8 @@ var epBrowser = epBrowser || {
 			p = p.replace(/^inv-/, "");
 			hat = "^";
 		    }
-		    predicates.push(hat + epBrowser.uriToShort(p, 1));
-		    predicates_html.push(hat + "<span style='color:#db7d25'>" + epBrowser.uriToShort(p, 1) + "</span>");
+		    predicates.push(hat + epBrowser.uriToShort(p, 1, false, renderDiv, param));
+		    predicates_html.push(hat + "<span style='color:#db7d25'>" + epBrowser.uriToShort(p, 1, false, renderDiv, param) + "</span>");
 		}
 		if(data.nodes[i].predicate_id) p_ids[data.nodes[i].predicate_id] = 1;
 		triple.predicates = predicates;
@@ -1379,7 +1380,7 @@ var epBrowser = epBrowser || {
 		    if(data.nodes[i].lang){ lang = "@" + data.nodes[i].lang; triple.objectLang = data.nodes[i].lang; }
 		    triple.object = data.nodes[i].key;
 		}else{
-		    triple.object = epBrowser.uriToShort(data.nodes[i].key, 1)
+		    triple.object = epBrowser.uriToShort(data.nodes[i].key, 1, false, renderDiv, param)
 		}
 		triple.objectType = data.nodes[i].sparql_label;
 		triple.objectDataType = data.nodes[i].type;
@@ -2128,7 +2129,7 @@ var epBrowser = epBrowser || {
 	}
     },
     
-    addGraphData: function(api_json){
+    addGraphData: function(api_json, renderDiv, param){
 	// console.log(api_json);
 	let json = api_json.data;
 
@@ -2248,7 +2249,7 @@ var epBrowser = epBrowser || {
 		    // 	if(hub_node) hub_node.child_count++;
 		    //// don't add edge, add predicate label
 		    let flag = 1;
-		    let add_predicate = epBrowser.uriToShort(json[i].p.value);
+		    let add_predicate = epBrowser.uriToShort(json[i].p.value, false, false, renderDiv, param);
 		    for(elm of data.edges){
 			if(elm.target == nodeKey2id[obj.key]){
 			    elm.predicate_label += ", " + add_predicate;
@@ -2263,7 +2264,7 @@ var epBrowser = epBrowser || {
 		    }
 		    ////
 		    if(flag){ // add edge
-			data.edges.push({id: edgeId, source: source, target: target, predicate: json[i].p.value, predicate_label: epBrowser.uriToShort(json[i].p.value), count: json[i].o_count.value, parent: parent, edge_key: edge_key});
+			data.edges.push({id: edgeId, source: source, target: target, predicate: json[i].p.value, predicate_label: epBrowser.uriToShort(json[i].p.value, false, false, renderDiv, param), count: json[i].o_count.value, parent: parent, edge_key: edge_key});
 			edgeST2id[source + "_" + target] = edgeId;
 			// add bi-directional flag
 			if(edgeST2id[target + "_" + source]){
@@ -2283,7 +2284,7 @@ var epBrowser = epBrowser || {
 	    }else{
 		nodeKey2id[obj.key] = nodeId;
 		data.nodes.push(obj);
-		data.edges.push({id: edgeId, source: source, target: target, predicate: json[i].p.value, predicate_label: epBrowser.uriToShort(json[i].p.value), count: json[i].o_count.value, parent: parent, edge_key: edge_key});
+		data.edges.push({id: edgeId, source: source, target: target, predicate: json[i].p.value, predicate_label: epBrowser.uriToShort(json[i].p.value, false, false, renderDiv, param), count: json[i].o_count.value, parent: parent, edge_key: edge_key});
 		edgeList[edge_key] = 1;
 		edgeST2id[source + "_" + target] = edgeId;
 		nodeId++;
@@ -2406,7 +2407,7 @@ var epBrowser = epBrowser || {
 	return type;
     },
 
-    uriToShort: function(uri, sparql, config){
+    uriToShort: function(uri, sparql, config, renderDiv, param){
 	let f = 0;
 	let prefix = "";
 	let [ , prefix_uri, postfix]  = uri.match(/(.+[\/#:])([^\/#:]*)$/);
@@ -2434,6 +2435,18 @@ var epBrowser = epBrowser || {
 	    }else{
 		prefix = "p" + epBrowser.prefixCount;
 		epBrowser.prefixCount++;
+
+		// fetch prefix.cc
+		if(!epBrowser.prefixCc404[prefix_uri]){
+		    let url = "https://prefix.cc/reverse?format=json&uri=" + encodeURIComponent(prefix_uri);
+		    fetch(url, {method: 'get', redirect: 'follow'}).then(res => {
+			if(res.ok) return res.json();
+			else{
+			    epBrowser.prefixCc404[prefix_uri] = true;
+			    return false;
+			}
+		    }).then(json => { epBrowser.setPrefixFromCc(json, renderDiv, param) });
+		}
 	    }
 	    epBrowser.prefix[prefix] = prefix_uri;
 	    epBrowser.prefixTemp[prefix] = prefix_uri;
@@ -2443,6 +2456,18 @@ var epBrowser = epBrowser || {
 	if(prefix_uri.length > epBrowser.maxPrefixUrlLen) epBrowser.maxPrefixUrlLen = prefix_uri.length;
 	if(sparql) epBrowser.queryPrefix[prefix] = 1;
 	return uri;      
+    },
+
+    setPrefixFromCc: function(json, renderDiv, param){
+	let prefix_new = Object.keys(json)[0];
+	if(prefix_new){
+	    for(let prefix_tmp of Object.keys(epBrowser.prefixTemp)){
+		if(epBrowser.prefixTemp[prefix_tmp] == json[prefix_new]){
+		    epBrowser.setCustomPrefix(renderDiv, param, prefix_tmp, prefix_new);
+		    break;
+		}
+	    }
+	}
     },
     
     prefix: {
