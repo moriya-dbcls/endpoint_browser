@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.2.2
+// version: 0.2.3
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.2.2",
+    version: "0.2.3",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -649,10 +649,10 @@ var epBrowser = epBrowser || {
 		.attr("class", "select_outer_endpoint")
 		.style("cursor", "pointer")
 		.on("click", function(d){
+		    let element = this;
 		    epBrowser.selectNode = d.id;
 		    epBrowser.selectLayer = d.layer;
 		    renderDiv.select("#outer_ep_click_uri").attr("value", d.key);
-		    let mouse = d3.mouse(d3.select('body').node());
 		    let outerSel = renderDiv.select("#outer_ep_select");
 		    outerSel.selectAll(".outer_ep_opt").remove();
 		    outerSel.selectAll(".outer_ep_opt")
@@ -663,11 +663,8 @@ var epBrowser = epBrowser || {
 			.attr("value", function(d){ if(d.sparqlEndpoint) return d.sparqlEndpoint[0] + "_" + d.direction;
 						    else return false; })
 			.text(function(d){ return d.id;});
-		    renderDiv.select("#outer_endpoints")
-			.style("position", "absolute")
-			.style("top", mouse[1] + "px")
-			.style("left", (mouse[0] + 20) + "px")
-			.style("display", "block");
+		    let popupEndpoint = renderDiv.select("#outer_endpoints").style("display", "block");
+		    epBrowser.setPopupPosition(renderDiv, popupEndpoint, element, {y: 12});
 		});
 	    federated_g.append("rect")
 		.attr("stroke", "#444444")
@@ -912,11 +909,6 @@ var epBrowser = epBrowser || {
 	//// on click
 	renderDiv.selectAll(".rdf_conf_undef").style("color", "red");
 	renderDiv.selectAll(".rdf_conf_comment").style("color", "darkgoldenrod");
-	let setPopupPosition = (popup, element) => {
-	    popup.style("position", "absolute")
-	    	.style("top", (element.getBoundingClientRect().top + pageYOffset - renderDiv.node().offsetTop + 14) + "px")
-		.style("left", (element.getBoundingClientRect().left + pageXOffset - renderDiv.node().offsetLeft) + "px");
-	}
 	////// expand rdf
 	let expandRdf = (element) => {
 	    let tmp = d3.select(element).attr("alt").split("_");
@@ -949,7 +941,7 @@ var epBrowser = epBrowser || {
 	    }
 	    epBrowser.hidePopupInputDiv(renderDiv);
 	    varNameDiv.style("display", "block");
-	    setPopupPosition(varNameDiv, element);
+	    epBrowser.setPopupPosition(renderDiv, varNameDiv, element);
 	    let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 		.attr("size", "20").style("border", "solid 3px #888888")
 		.on("keydown", function(){
@@ -987,7 +979,7 @@ var epBrowser = epBrowser || {
 	    }
 	    epBrowser.hidePopupInputDiv(renderDiv);
 	    varNameDiv.style("display", "block");
-	    setPopupPosition(varNameDiv, element);
+	    epBrowser.setPopupPosition(renderDiv, varNameDiv, element);
 	    let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 		.attr("size", "20").style("border", "solid 3px #888888")
 		.on("keydown", function(){
@@ -1028,7 +1020,7 @@ var epBrowser = epBrowser || {
 	    }
 	    epBrowser.hidePopupInputDiv(renderDiv);
 	    cardDiv.style("display", "block");
-	    setPopupPosition(cardDiv, element);
+	    epBrowser.setPopupPosition(renderDiv, cardDiv, element);
 	    cardDiv.selectAll(".rdf_conf_card_opt").remove();
 	    let select = cardDiv.select("#rdf_conf_card_select");
 	    select.append("option").attr("class", "rdf_conf_card_opt").text("select");
@@ -1073,7 +1065,7 @@ var epBrowser = epBrowser || {
 	    }
 	    epBrowser.hidePopupInputDiv(renderDiv);
 	    cardDiv.style("display", "block");
-	    setPopupPosition(cardDiv, element);
+	    epBrowser.setPopupPosition(renderDiv, cardDiv, element);
 	    cardDiv.selectAll(".rdf_conf_card_opt").remove();
 	    let select = cardDiv.select("#rdf_conf_card_select");
 	    select.append("option").attr("class", "rdf_conf_card_opt").text("select");
@@ -1111,6 +1103,18 @@ var epBrowser = epBrowser || {
 	renderDiv.selectAll(".rdf_conf_custom_prefix").style("color", "#1680c4");
 	renderDiv.selectAll(".rdf_conf_custom_node_name").style("color", "#1680c4");
 	epBrowser.rdfConfRenderFlag = true;
+    },
+
+    setPopupPosition: function(renderDiv, popup, element, pos){
+	let x = 0;
+	let y = 14;
+	if(pos){
+	    if(pos.y) y += pos.y;
+	    if(pos.x) x += pos.x;
+	}
+	popup.style("position", "absolute")
+	    .style("top", (element.getBoundingClientRect().top + pageYOffset - renderDiv.node().offsetTop + y) + "px")
+	    .style("left", (element.getBoundingClientRect().left + pageXOffset - renderDiv.node().offsetLeft + x) + "px");
     },
     
     startSimulation: function(edge, edge_label, node_g){
@@ -1193,7 +1197,7 @@ var epBrowser = epBrowser || {
     },
 
     selectSubGraphMode: function(renderDiv){
-	epBrowser.stopSimulation();
+	epBrowser.stopSimulation(); 
 	renderDiv.select("#sparql_run_div").style("display", "block");
 	
 	let svg = renderDiv.select("svg");
@@ -1276,14 +1280,11 @@ var epBrowser = epBrowser || {
 		sparql_node_g.select("rect").attr("class", "sparql_node_rect sparql_" + d.sparql_label + literal_flag);
 		sparql_node_g.select("text").attr("class", "node_label_sparql sparql_" + d.sparql_label + literal_flag).text(text);
 		sparql_node_g.select("rect").on("click", function(){
+		    let element = this;
 		    if(d.sparql_label == "var"){
 			epBrowser.hidePopupInputDiv(renderDiv);
-			let mouse = d3.mouse(d3.select('body').node());
-			let varNameDiv = renderDiv.select("#var_name_form")
-			    .style("position", "absolute")
-			    .style("top", mouse[1] + "px")
-			    .style("left", (mouse[0] + 20) + "px").
-			    style("display", "block");
+			let varNameDiv = renderDiv.select("#var_name_form").style("display", "block");
+			epBrowser.setPopupPosition(renderDiv, varNameDiv, element, {y: 10});
 			let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 			    .attr("size", "20").style("border", "solid 3px #888888")
 			    .on("keypress", function(){
@@ -1699,18 +1700,14 @@ var epBrowser = epBrowser || {
 		    .on("click", function(){
 			let textElm = d3.select(this);
 			epBrowser.hidePopupInputDiv(renderDiv);
-			let mouse = d3.mouse(d3.select('body').node());
-			let varNameDiv = renderDiv.select("#var_name_form")
-			    .style("position", "absolute")
-			    .style("top", mouse[1] + "px")
-			    .style("left", (mouse[0] + 20) + "px")
-			    .style("display", "block");
+			let varNameDiv = renderDiv.select("#var_name_form").style("display", "block");
+			epBrowser.setPopupPosition(renderDiv, varNameDiv, outer_ep_box.node(), {y: 10});
 			let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
-			    .attr("size", "80").style("border", "solid 3px #888888")
+			    .attr("size", "80").style("border", "solid 3px #888888").attr("value", "http://")
 			    .on("keypress", function(){
 				let outerEp = this.value;
 				if(d3.event.key === 'Enter' && outerEp.match(/^https*:\/\//)){
-				    if(outerEp.match(/^https*:\/\//)){
+				    if(outerEp.match(/^https*:\/\/.+/)){
 					epBrowser.outerEp = outerEp;
 					epBrowser.outerEpFlag = true;
 					epBrowser.clickableFlag = true;
