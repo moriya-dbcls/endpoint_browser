@@ -988,7 +988,7 @@ var epBrowser = epBrowser || {
 			var_name = var_name.toLowerCase();
 			if(!var_name.match(/^\?/)) var_name = "?" + var_name;
 			let element_id = element.id;
-			epBrowser.setNodeVarName(renderDiv, id, var_name);
+			epBrowser.setNodeVarName(renderDiv, param, id, var_name);
 			renderDiv.select("#" + element_id).node().focus();
 		    }else if(d3.event.key === 'Escape') {
 			epBrowser.hidePopupInputDiv(renderDiv, param);
@@ -1196,7 +1196,7 @@ var epBrowser = epBrowser || {
 	}
     },
 
-    selectSubGraphMode: function(renderDiv){
+    selectSubGraphMode: function(renderDiv, param){
 	epBrowser.stopSimulation(); 
 	renderDiv.select("#sparql_run_div").style("display", "block");
 	
@@ -1206,7 +1206,7 @@ var epBrowser = epBrowser || {
 		let rect = d3.select(this).select("rect");
 		let value = "off";
 		if(d.sparql_label) value = d.sparql_label;
-		changeNodeMode(renderDiv, d, rect, value);
+		changeNodeMode(renderDiv, param, d, rect, value);
 		return "node_mouse_eve_g";
 	    }) 
 	    .on("click", function(d){
@@ -1214,17 +1214,17 @@ var epBrowser = epBrowser || {
 		if(d.sparql_label == undefined){
 		    let next = "var";
 		    if(d.predicate == epBrowser.rdfType) next = "const";
-		    changeNodeMode(renderDiv, d, click_rect, next);
+		    changeNodeMode(renderDiv, param, d, click_rect, next);
 		}else if(d.sparql_label == "var"){
 		    let next = "const";
 		    if(d.type == "bnode") next = "path";
-		    changeNodeMode(renderDiv, d, click_rect, next);
+		    changeNodeMode(renderDiv, param, d, click_rect, next);
 		}else if(d.sparql_label == "const"){
 		    let next = "path";
 		    if(d.predicate == epBrowser.rdfType || d.type.match(/literal/) || d.id == 0) next = "off";
-		    changeNodeMode(renderDiv, d, click_rect, next);
+		    changeNodeMode(renderDiv, param, d, click_rect, next);
 		}else if(d.sparql_label == "path" || d.sparql_label == "blank"){
-		    changeNodeMode(renderDiv, d, click_rect, "off");
+		    changeNodeMode(renderDiv, param, d, click_rect, "off");
 		}
 	    })
 	    .on("mouseover", function(d){
@@ -1237,7 +1237,7 @@ var epBrowser = epBrowser || {
 	    });
 
 	
-	function changeNodeMode(renderDiv, d, click_rect, value){
+	function changeNodeMode(renderDiv, param, d, click_rect, value){
 	    epBrowser.hidePopupInputDiv(renderDiv);
 	    // reset blank (-> path)
 	    for(elm of epBrowser.graphData.nodes){
@@ -1294,7 +1294,7 @@ var epBrowser = epBrowser || {
 				    if(!var_name.match(/^\?/)) var_name = "?" + var_name;
 				    let id = varNameDiv.select("#var_name_node_id").attr("value");
 				   // console.log(id + " " + var_name);
-				    epBrowser.setNodeVarName(renderDiv, id, var_name);
+				    epBrowser.setNodeVarName(renderDiv, param, id, var_name);
 				}
 			    }).on("keydown", function(){
 				if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
@@ -1308,12 +1308,12 @@ var epBrowser = epBrowser || {
 		});
 	    }
 	    
-	    epBrowser.traceGraph(renderDiv);
+	    epBrowser.traceGraph(renderDiv, param);
 	}
     },
 
     // selected subgraph to SPARQL query
-    traceGraph: function(renderDiv){
+    traceGraph: function(renderDiv, param){
 	let data = epBrowser.graphData;
 	epBrowser.queryPrefix = {};
 
@@ -1331,7 +1331,7 @@ var epBrowser = epBrowser || {
 		let predicates_html = [];
 		let nodes = searchNext(renderDiv, data.nodes[i].subject_id);
 		if(nodes === false){
-		    epBrowser.traceGraph(renderDiv);  // re-trace (hit 'path -> blank' node)
+		    epBrowser.traceGraph(renderDiv, param);  // re-trace (hit 'path -> blank' node)
 		    return 0;
 		}
 		if(nodes === undefined || !nodes[0]) continue;
@@ -1343,7 +1343,7 @@ var epBrowser = epBrowser || {
 		    triple.subject = variant;
 		    if(nodes[0].sparql_label == "var") vars[variant] = 1;
 		}else{
-		    triple.subject = epBrowser.uriToShort(nodes[0].key, false, false, renderDiv, param);
+		    triple.subject = epBrowser.uriToShort(nodes[0].key, 1, false, renderDiv, param);
 		}
 		triple.subjectType = nodes[0].sparql_label;
 		//// property path
@@ -1914,7 +1914,7 @@ var epBrowser = epBrowser || {
 
 	    // mode check
 	    if(epBrowser.subgraphMode){  //// subgraph mode
-		epBrowser.selectSubGraphMode(renderDiv);
+		epBrowser.selectSubGraphMode(renderDiv, param);
 	    }else if(epBrowser.nodeRemoveMode){  //// remove mode
 		let node_g = svg.selectAll(".node_mouse_eve_g");
 		node_g.on("click", function(d){ epBrowser.removeGraphData(renderDiv, param, d); })
@@ -1998,7 +1998,7 @@ var epBrowser = epBrowser || {
 	renderDiv.select("#rdf_conf_card_div").style("display", "none");
     },
 
-    setNodeVarName: function(renderDiv, id, var_name){
+    setNodeVarName: function(renderDiv, param, id, var_name){
 	let nodes = epBrowser.graphData.nodes;
 	for(elm of nodes){
 	    if(elm.id == id){
@@ -2009,7 +2009,7 @@ var epBrowser = epBrowser || {
 	let sparql_node_g = renderDiv.select("#popup_sparql_node_g_" + id);
 	sparql_node_g.select("text").text(var_name);
 	epBrowser.hidePopupInputDiv(renderDiv);
-	epBrowser.traceGraph(renderDiv);
+	epBrowser.traceGraph(renderDiv, param);
     },
 
     setCustomPrefix: function(renderDiv, param, prefix_tmp, prefix_new){
