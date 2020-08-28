@@ -376,6 +376,7 @@ var epBrowser = epBrowser || {
     },
     
     forcegraph: function(renderDiv, param) {
+		console.log("force");
 	let data = epBrowser.graphData;
 	let simulation = epBrowser.simulation;
 	let svg = renderDiv.select('svg');
@@ -989,6 +990,7 @@ var epBrowser = epBrowser || {
 			if(!var_name.match(/^\?/)) var_name = "?" + var_name;
 			let element_id = element.id;
 			epBrowser.setNodeVarName(renderDiv, param, id, var_name);
+			epBrowser.forcegraph(renderDiv, param);
 			renderDiv.select("#" + element_id).node().focus();
 		    }else if(d3.event.key === 'Escape') {
 			epBrowser.hidePopupInputDiv(renderDiv, param);
@@ -1314,6 +1316,7 @@ var epBrowser = epBrowser || {
 
     // selected subgraph to SPARQL query
     traceGraph: function(renderDiv, param){
+		console.log("trace");
 	let data = epBrowser.graphData;
 	epBrowser.queryPrefix = {};
 
@@ -2006,6 +2009,7 @@ var epBrowser = epBrowser || {
 		break;
 	    }
 	}
+	console.log("setVar");
 	let sparql_node_g = renderDiv.select("#popup_sparql_node_g_" + id);
 	sparql_node_g.select("text").text(var_name);
 	epBrowser.hidePopupInputDiv(renderDiv);
