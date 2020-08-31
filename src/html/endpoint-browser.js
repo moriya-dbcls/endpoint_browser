@@ -712,12 +712,15 @@ var epBrowser = epBrowser || {
 	function truncate(str, len){
 	    return str.length <= len + 3 ? str: (str.substr(0, len) + "...");
 	}
+
+	// subgraph mode
+	if(epBrowser.subgraphMode) epBrowser.selectSubGraphMode(renderDiv, param);
     },
 
     // rdf config
     makeRdfConfig: function(renderDiv, param, data){
 	//console.log(data.nodes);
-
+	console.log(epBrowser.subgraphMode);
 	let rdfConfIndex = 0;
 	
 	//// rdf config prefix
@@ -1288,8 +1291,8 @@ var epBrowser = epBrowser || {
 		sparql_node_g.style("display", "block");
 		sparql_node_g.select("rect").attr("class", "sparql_node_rect sparql_" + d.sparql_label + literal_flag);
 		sparql_node_g.select("text").attr("class", "node_label_sparql sparql_" + d.sparql_label + literal_flag).text(text);
-		sparql_node_g.select("rect").on("click", function(){
-		    let element = this;
+		sparql_node_g.on("click", function(){
+		    let element = d3.select(this).select('rect').node();
 		    if(d.sparql_label == "var"){
 			let varNameDiv = renderDiv.select("#var_name_form");
 			if(varNameDiv.style("display") == "block"){
@@ -1308,12 +1311,12 @@ var epBrowser = epBrowser || {
 				    let id = varNameDiv.select("#var_name_node_id").attr("value");
 				   // console.log(id + " " + var_name);
 				    epBrowser.setNodeVarName(renderDiv, param, id, var_name);
-				}else epBrowser.hidePopupInputDiv(renderDiv, param);
+				}else if(d3.event.key === 'Enter') epBrowser.hidePopupInputDiv(renderDiv, param);
 			    }).on("keydown", function(){
 				if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
 			    });
 			input.node().focus();      // focus -> value (move coursor to end of value)
-			input.attr("value", d3.select(this.parentNode).select('text').text());
+			input.attr("value", d3.select(this).select('text').text());
 			input.node().select();
 
 			varNameDiv.select("#var_name_node_id").attr("value", id);
@@ -1782,50 +1785,6 @@ var epBrowser = epBrowser || {
 	    }
 	}
 
-/*	function makePrefixLine(prefix_box, key, x, y, line_num, custom){ // old code
-	    let label = key + ":";
-	    label = label.replace(/::/, ":");
-	    prefix_box.append("text").text(label).attr("id", "prefix_id_" + label)
-		.attr("fill", function(){
-		    if(custom) return "#1680c4";
-		    else return "#666666";
-		})
-		.attr("font-size", "13px")
-		.attr("x", x + 40).attr("y",  y + (line_num * 20) + 40)
-		.filter(function(){return custom;})
-		.on("click", function(){
-		    let textElm = d3.select(this);
-		    let prefix_tmp = textElm.text().replace(/:/, "");
-		    epBrowser.hidePopupInputDiv(renderDiv);
-		    let mouse = d3.mouse(d3.select('body').node());
-		    let varNameDiv = renderDiv.select("#var_name_form")
-			.style("position", "absolute")
-			.style("top", mouse[1] + "px")
-			.style("left", (mouse[0] + 20) + "px")
-			.style("display", "block");
-		    let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
-			.attr("size", "20").style("border", "solid 3px #888888")
-			.on("keypress", function(){
-			    let prefix_new = this.value;
-			    if(d3.event.key === 'Enter' && prefix_new && prefix_new.match(/\w+/)){
-				prefix_new = prefix_new.match(/(\w+)/)[1];
-				prefix_new = prefix_new.toLowerCase();
-				let id = varNameDiv.select("#var_name_node_id").attr("value");
-				textElm.text(prefix_new + ":");
-				epBrowser.setCustomPrefix(renderDiv, param, prefix_tmp, prefix_new);
-			    }
-			}).on("keydown", function(){
-			    if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
-			});
-		    input.node().focus();      // focus -> value (move coursor to end of value)
-		    input.attr("value", prefix_tmp);
-		    input.node().select();
-		})
-		.style("cursor", "pointer");
-	    prefix_box.append("text").text("<" + epBrowser.usedPrefix[key] + ">").attr("fill", "#666666")
-		.attr("font-size", "13px").attr("x", x + 120).attr("y", y + (line_num * 20) + 40);
-	}
-*/
 	function zoomSwitch(g, flag){
 	    changeSwitchColor(g, flag);
 	    if(flag){
