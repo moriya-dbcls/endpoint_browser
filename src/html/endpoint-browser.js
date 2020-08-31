@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.2.3
+// version: 0.2.4
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.2.3",
+    version: "0.2.4",
     api: "//localhost:3000/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
@@ -376,7 +376,6 @@ var epBrowser = epBrowser || {
     },
     
     forcegraph: function(renderDiv, param) {
-		console.log("force");
 	let data = epBrowser.graphData;
 	let simulation = epBrowser.simulation;
 	let svg = renderDiv.select('svg');
@@ -755,16 +754,22 @@ var epBrowser = epBrowser || {
 		}
 	    }
 	    let var_name = "node_" + node.id;
-	    if(node.class_label && node.class != "http://www.w3.org/2002/07/owl#Class") var_name = node.class_label.toLowerCase().replace(/ /g, "_");
-	    if(var_name.match(/^node_/) && node.key.match(/identifiers.org/)) var_name = node.key.match(/identifiers.org\/([^\/]+)/)[1];
 	    if(node.sparql_var_name) var_name = node.sparql_var_name.replace(/^\?/, "");
-	    if(subject && node.predicate == "http://www.w3.org/2000/01/rdf-schema#label") var_name = subject.toLowerCase() + "_label";
-	    if(subject && node.predicate == "http://purl.org/dc/terms/identifier") var_name = subject.toLowerCase() + "_id";
-	//    if(node.type == "uri" && node.class && node.predicate != "http://www.w3.org/2000/01/rdf-schema#seeAlso") var_name = var_name.charAt(0).toUpperCase() + var_name.slice(1);
-	    if(!var_name.match(/^[Nn]ode_\d+$/)) epBrowser.sparqlVars[var_name] = 1;
-	    if(var_name.match(/^[Nn]ode_\d+$/) && pre_object_name) var_name = pre_object_name;
+	    else{ // var name suggestion
+		if(node.sparql_suggest_var_name) var_name = node.sparql_suggest_var_name.replace(/^\?/, "");
+		else if(node.class_label && node.class != "http://www.w3.org/2002/07/owl#Class") var_name = node.class_label.toLowerCase().replace(/ /g, "_"); //class label
+		else if(var_name.match(/^node_/) && node.key.match(/identifiers.org/)) var_name = node.key.match(/identifiers.org\/([^\/]+)/)[1]; // identifiers.org type
+		else if(subject && node.predicate == "http://www.w3.org/2000/01/rdf-schema#label") var_name = subject.toLowerCase() + "_label"; // _label
+		else if(subject && node.predicate == "http://purl.org/dc/terms/identifier") var_name = subject.toLowerCase() + "_id"; // _id
+		else if(var_name.match(/^[Nn]ode_\d+$/) && pre_object_name) var_name = pre_object_name; // before blank class label (?)
+		if(!var_name.match(/^[Nn]ode_\d+$/)){
+		    epBrowser.sparqlVars[var_name] = 1;
+		    node.sparql_suggest_var_name = "?" + var_name;
+		}
+	    }
 	    if(var_name.match(/^[Nn]ode_\d+$/)) var_name = "<span class='rdf_conf_node_name' alt='" + node.id + "'>" + var_name + "</span>";
-	    else var_name = "<span class='rdf_conf_node_name rdf_conf_custom_node_name' alt='" + node.id + "'>" + var_name + "</span>";
+	    else if(node.sparql_var_name) var_name = "<span class='rdf_conf_node_name rdf_conf_custom_node_name' alt='" + node.id + "'>" + var_name + "</span>";
+	    else var_name = "<span class='rdf_conf_node_name rdf_conf_suggest_node_name' alt='" + node.id + "'>" + var_name + "</span>";
 	    return var_name;
 	}
 
@@ -1104,6 +1109,7 @@ var epBrowser = epBrowser || {
 	    });
 	renderDiv.selectAll(".rdf_conf_custom_prefix").style("color", "#1680c4");
 	renderDiv.selectAll(".rdf_conf_custom_node_name").style("color", "#1680c4");
+	renderDiv.selectAll(".rdf_conf_suggest_node_name").style("color", "#d368d9");
 	epBrowser.rdfConfRenderFlag = true;
     },
 
@@ -1263,8 +1269,9 @@ var epBrowser = epBrowser || {
 		let text = "";
 		let literal_flag = "";
 		if(value == "var"){
-		    text = "?n" + d.id;
+		    text = "?node_" + d.id;
 		    if(d.sparql_var_name) text = d.sparql_var_name;
+		    else if (d.sparql_suggest_var_name) text = d.sparql_suggest_var_name;
 		}else if(value == "const"){
 		    if(d.type.match(/literal/)){
 			text = '"' + d.key + '"';
@@ -1284,25 +1291,29 @@ var epBrowser = epBrowser || {
 		sparql_node_g.select("rect").on("click", function(){
 		    let element = this;
 		    if(d.sparql_label == "var"){
-			epBrowser.hidePopupInputDiv(renderDiv);
-			let varNameDiv = renderDiv.select("#var_name_form").style("display", "block");
+			let varNameDiv = renderDiv.select("#var_name_form");
+			if(varNameDiv.style("display") == "block"){
+			    epBrowser.hidePopupInputDiv(renderDiv);
+			    return 0;
+			}
+			varNameDiv.style("display", "block");
 			epBrowser.setPopupPosition(renderDiv, varNameDiv, element, {y: 10});
 			let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 			    .attr("size", "20").style("border", "solid 3px #888888")
 			    .on("keypress", function(){
 				let var_name = this.value.replace(/[_\s]+/g, "_");
-				if(d3.event.key === 'Enter' && var_name && !var_name.match(/^\?$/)){
+				if(d3.event.key === 'Enter' && var_name && !var_name.match(/^\?$/) && !var_name.match(/^\?*node_\d+$/)){
 				    var_name = var_name.toLowerCase();
 				    if(!var_name.match(/^\?/)) var_name = "?" + var_name;
 				    let id = varNameDiv.select("#var_name_node_id").attr("value");
 				   // console.log(id + " " + var_name);
 				    epBrowser.setNodeVarName(renderDiv, param, id, var_name);
-				}
+				}else epBrowser.hidePopupInputDiv(renderDiv, param);
 			    }).on("keydown", function(){
 				if(d3.event.key === 'Escape') epBrowser.hidePopupInputDiv(renderDiv, param);
 			    });
-			input.node().focus();      // focus -> value (move coursor to end of value)  
-			input.attr("value", "?n" + id);
+			input.node().focus();      // focus -> value (move coursor to end of value)
+			input.attr("value", d3.select(this.parentNode).select('text').text());
 			input.node().select();
 
 			varNameDiv.select("#var_name_node_id").attr("value", id);
@@ -1316,7 +1327,6 @@ var epBrowser = epBrowser || {
 
     // selected subgraph to SPARQL query
     traceGraph: function(renderDiv, param){
-		console.log("trace");
 	let data = epBrowser.graphData;
 	epBrowser.queryPrefix = {};
 
@@ -1341,8 +1351,9 @@ var epBrowser = epBrowser || {
 
 		//// subject
 		if(nodes[0].sparql_label == "var" || nodes[0].sparql_label == "blank"){
-		    let variant = "?n" + nodes[0].id;
+		    let variant = "?node_" + nodes[0].id;
 		    if(nodes[0].sparql_var_name && nodes[0].sparql_label == "var") variant = nodes[0].sparql_var_name;
+		    else if(nodes[0].sparql_suggest_var_name && nodes[0].sparql_label == "var") variant = nodes[0].sparql_suggest_var_name;
 		    triple.subject = variant;
 		    if(nodes[0].sparql_label == "var") vars[variant] = 1;
 		}else{
@@ -1375,8 +1386,9 @@ var epBrowser = epBrowser || {
 		triple.predicates = predicates;
 		//// object
 		if(data.nodes[i].sparql_label == "var" || data.nodes[i].sparql_label == "blank"){
-		    let variant = "?n" + data.nodes[i].id;
+		    let variant = "?node_" + data.nodes[i].id;
 		    if(data.nodes[i].sparql_var_name && data.nodes[i].sparql_label == "var") variant = data.nodes[i].sparql_var_name;
+		    else if(data.nodes[i].sparql_suggest_var_name && data.nodes[i].sparql_label == "var") variant = data.nodes[i].sparql_suggest_var_name;
 		    triple.object = variant;
 		    if(data.nodes[i].sparql_label == "var") vars[variant] = 1;
 		}else if(data.nodes[i].type.match(/literal/)){
@@ -2009,7 +2021,6 @@ var epBrowser = epBrowser || {
 		break;
 	    }
 	}
-	console.log("setVar");
 	let sparql_node_g = renderDiv.select("#popup_sparql_node_g_" + id);
 	sparql_node_g.select("text").text(var_name);
 	epBrowser.hidePopupInputDiv(renderDiv);
