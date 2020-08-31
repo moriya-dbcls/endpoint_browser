@@ -23,6 +23,9 @@ Run containers with `docker-compose` and open `http://localhost:3000/html`.
     $ docker-compose up --build -d
 ```
 
+Start endpoint browser
+http://localhost:3000/html/
+
 Stop containers
 
 ```
