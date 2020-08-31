@@ -720,7 +720,7 @@ var epBrowser = epBrowser || {
     // rdf config
     makeRdfConfig: function(renderDiv, param, data){
 	//console.log(data.nodes);
-	console.log(epBrowser.subgraphMode);
+
 	let rdfConfIndex = 0;
 	
 	//// rdf config prefix
@@ -2300,6 +2300,7 @@ var epBrowser = epBrowser || {
 	if(clickData.child){
 	    svg.selectAll(".parent_" + clickData.id).remove();
 	    clickData.child = false;
+	    clickData.child_count = 0;
 	    clickData.off_click[clickData.endpoint] = false;
 	    clickData.off_click_inv[clickData.endpoint] = false;
 	    for(let i = 0; i < epBrowser.graphData.nodes.length; i++){
@@ -2321,8 +2322,17 @@ var epBrowser = epBrowser || {
 	}else if(clickData.id > 0){
 	    svg.select("#node_g_id_" + clickData.id).remove();
 	    epBrowser.nodeKey2id[clickData.key] = undefined;
+	    let subject_id = undefined;
 	    for(let i = 0; i < epBrowser.graphData.nodes.length; i++){
 		if(epBrowser.graphData.nodes[i].id != clickData.id) newData.nodes.push(epBrowser.graphData.nodes[i]);
+		else subject_id = epBrowser.graphData.nodes[i].subject_id;
+	    }
+	    for(let i = 0; i < epBrowser.graphData.nodes.length; i++){ // minus child_count of parent
+		if(epBrowser.graphData.nodes[i].id == subject_id){
+		    epBrowser.graphData.nodes[i].child_count--;
+		    if(epBrowser.graphData.nodes[i].child_count < 0) epBrowser.graphData.nodes[i].child_count = 0;
+		    break;
+		}
 	    }
 	    for(let i = 0; i < epBrowser.graphData.edges.length; i++){
 		let id = epBrowser.graphData.edges[i].target.id;
