@@ -9,6 +9,7 @@
 var epBrowser = epBrowser || {
     version: "0.2.4",
     api: "//localhost:3000/api/",
+    api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
     debug: false,
@@ -2262,7 +2263,7 @@ var epBrowser = epBrowser || {
 		edgeId++;
 		if(hub_node) hub_node.child_count++;
 		if((obj.key.match(/^http:\/\/identifiers.org\//) || obj.key.match(/^http:\/\/purl\./)) && !epBrowser.endpointList[obj.key]){
-		    let url = epBrowser.api + epBrowser.findEndpointApi;
+		    let url = epBrowser.api_orig + epBrowser.findEndpointApi;
 		    epBrowser.fetchReq("post", url, false, {"apiArg": ["uri=" + encodeURIComponent(obj.key)]}, epBrowser.addEndpointToUri);
 		}
 	    }
