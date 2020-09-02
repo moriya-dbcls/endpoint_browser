@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.2.4
+// version: 0.2.5
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.2.4",
+    version: "0.2.5",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -890,7 +890,8 @@ var epBrowser = epBrowser || {
 		let id = node.id;
 		let subject = getRdfConfVarName(node);
 		let tmp = subject.match(/^(<span.+>)(.+)(<\/span>)$/);
-		sparql_subject.push(tmp[2]);
+		if(sparql_subject.length == 0) sparql_subject.push(snakeToCamel(tmp[2]));
+		else sparql_subject.push(tmp[2]);
 		let snake_subject = tmp[2];
 		subject = tmp[1] + snakeToCamel(tmp[2]) + tmp[3];
 		if(node.class || id == 0){
