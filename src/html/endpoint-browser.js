@@ -2393,6 +2393,10 @@ var epBrowser = epBrowser || {
     uriToShort: function(uri, sparql, config, renderDiv, param){
 	let f = 0;
 	let prefix = "";
+	if(!uri.match(/(.+[\/#:])([^\/#:]*)$/)){ // uri check 
+	    console.log("URI syntax error: '" + uri + "'");
+	    return "<span style='color:red;font-weight:bold;'>URIsyntax error: '" + uri + "'</span>";
+	}
 	let [ , prefix_uri, postfix]  = uri.match(/(.+[\/#:])([^\/#:]*)$/);
 	if(!uri.match(/^urn:/)){
 	    for(key of Object.keys(epBrowser.prefix)){
