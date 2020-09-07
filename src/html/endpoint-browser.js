@@ -390,9 +390,6 @@ var epBrowser = epBrowser || {
 	let node_g = nodes_layer.selectAll(".node_g");
 
 //	console.log(data);
-
-	// rdf config (set new suggest var name)
-	epBrowser.makeRdfConfig(renderDiv, param, data);
 	
 	svg.select("#popup_mouse_event_label").attr("display", "none");
 	
@@ -622,29 +619,6 @@ var epBrowser = epBrowser || {
 	    .attr("class", "node_label_sparql")
 	    .attr("dx", "0px")
 	    .attr("dy", "38px");
-
-/*	// literal type
-	let node_mouse_eve_literal = node_g.selectAll(".node_mouse_eve_g")
-	    .filter(function(d) { return d.type == "literal" || d.type == "typed-literal"; });
-	node_mouse_eve_literal.append("rect").attr("class", "literal_type_box");
-	node_mouse_eve_literal.append("text").attr("class", "literal_type").attr("transform", "translate(76) rotate(-90)")
-	    .text(function(d){
-		let dtype = "str";
-		if(d.type != "literal") {
-		    if(d.datatype.match("http://www.w3.org/2001/XMLSchema")){
-			dtype = d.datatype.replace("http://www.w3.org/2001/XMLSchema#", "");
-			if(dtype == "string") dtype = "str";
-			else if(dtype == "integer") dtype = "int";
-			else if(dtype == "boolean") dtype = "bool";
-			else if(dtype == "hexBinary") dtype = "hex";
-			else if(dtype == "base64Binary") dtype = "base64";
-		    }else{
-			dtype = d.datatype.match(/.+[\/#:]([^\/#:]*)$/)[1];
-		    }
-		}
-		return dtype;
-	    });
-*/
 	
 	// node mouse event
 	let endpoint = epBrowser.endpoint;
@@ -767,6 +741,9 @@ var epBrowser = epBrowser || {
 	}
 	
 	svg.selectAll("text").style("user-select", "none");
+
+	// rdf config (set new suggest var name)
+	epBrowser.makeRdfConfig(renderDiv, param, data);
 	
 	// simulation
 	epBrowser.startSimulation(edge, edge_label, node_g);
@@ -840,13 +817,7 @@ var epBrowser = epBrowser || {
 	    if(node.sparql_var_name) var_name = node.sparql_var_name.replace(/^\?/, "");
 	    else{ // var name suggestion
 		if(node.sparql_suggest_var_name) var_name = node.sparql_suggest_var_name.replace(/^\?/, "");
-		else if(subject && node.predicate == "http://www.w3.org/2000/01/rdf-schema#label") var_name = subject.toLowerCase() + "_label"; // _label
-		else if(subject && node.predicate == "http://purl.org/dc/terms/identifier") var_name = subject.toLowerCase() + "_id"; // _id
-		else if(var_name.match(/^[Nn]ode_\d+$/) && pre_object_name) var_name = pre_object_name.toLowerCase().replace(/\s/, "_"); // before blank class label (?)
-		if(!var_name.match(/^[Nn]ode_\d+$/)){
-		    epBrowser.sparqlVars[var_name] = 1;
-		    node.sparql_suggest_var_name = "?" + var_name;
-		}
+		if(!var_name.match(/^[Nn]ode_\d+$/)) epBrowser.sparqlVars[var_name] = 1;
 	    }
 	    if(var_name.match(/^[Nn]ode_\d+$/)) var_name = "<span class='rdf_conf_node_name' alt='" + node.id + "'>" + var_name + "</span>";
 	    else if(node.sparql_var_name) var_name = "<span class='rdf_conf_node_name rdf_conf_custom_node_name' alt='" + node.id + "'>" + var_name + "</span>";
