@@ -22,6 +22,13 @@ text.node_label {
     text-anchor: middle;
 }
 
+text.node_label_uri{
+    fill: white;
+    font-size: 10px;
+    font-weight: bold;
+    text-anchor: start;
+}
+
 text.node_label_sparql {
     font-size: 12px;
     text-anchor: middle;
@@ -123,6 +130,7 @@ rect.node {
     ry: 8px;
 }
 
+/*
 rect.literal_type_box {
     stroke: none;
     fill: black;
@@ -140,6 +148,32 @@ text.literal_type {
     font-weight: bold;
     text-anchor: middle;
 }
+*/
+
+rect.literal_type_box {
+    stroke: none;
+    fill: black;
+    opacity: 0.5;
+    width: 160px;
+    height: 16px;
+}
+
+rect.literal_type_box_l {
+    stroke: none;
+    fill: black;
+    opacity: 0.3;
+    width: 160px;
+    height: 16px;
+}
+
+text.literal_type {
+    stroke: none;
+    fill: white;
+    opacity: 0.8;
+    font-size: 10px;
+    font-weight: bold;
+    text-anchor: end;
+}
 
 rect.node_class {
     fill: #fff4c3;
@@ -156,7 +190,8 @@ rect.node_literal {
 }
 
 rect.node_bnode {
-    fill: #dfdfdf;
+    /* fill: #dfdfdf; */
+    fill: #f2f2e9;
     stroke-dasharray: 6 6;
 }
 
@@ -175,7 +210,8 @@ rect.node_literal_l {
 }
 
 rect.node_bnode_l {
-    fill: #f4f4f4;
+ /*   fill: #f4f4f4; */
+    fill: #fcfcfa;
     stroke-dasharray: 6 6;
 }
 

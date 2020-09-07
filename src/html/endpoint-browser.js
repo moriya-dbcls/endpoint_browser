@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.2.5
+// version: 0.3.0
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.2.5",
+    version: "0.3.0",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -154,6 +154,7 @@ var epBrowser = epBrowser || {
 	    .attr("height", param.height)
 	    .on("mouseover", function(){ epBrowser.onMouseSvg = true; })
 	    .on("mouseout", function(){ epBrowser.onMouseSvg = false; });
+	svg.append("defs").append("clipPath").attr("id", "round-corner").append("rect").attr("x", 0).attr("y", 0).attr("width", 160).attr("height", 40).attr("rx", 8).attr("ry", 8);
 	let g = svg.append('g').attr("id", "zoom_g"); // g for zoom
 	g = g.append('g').attr("id", "drag_g");       // g for drag
 	g.attr("transform", "translate(" + param.width / 2 +"," + param.height / 2 + ")"); // position init
@@ -264,7 +265,6 @@ var epBrowser = epBrowser || {
 		    }
 		    if(inv > 0) param.apiArg.push("inv=" + inv);
 		    let url = epBrowser.api + epBrowser.getLinksApi;
-		    console.log(param.apiArg.join(" "));
 		    epBrowser.outerEpFlag = true;
 		    epBrowser.fetchReq("post", url, renderDiv, param, epBrowser.updateGraph);
 		}
@@ -391,6 +391,9 @@ var epBrowser = epBrowser || {
 
 //	console.log(data);
 
+	// rdf config (set new suggest var name)
+	epBrowser.makeRdfConfig(renderDiv, param, data);
+	
 	svg.select("#popup_mouse_event_label").attr("display", "none");
 	
 	// add
@@ -493,29 +496,106 @@ var epBrowser = epBrowser || {
 		return "node node_" + d.node_type;
 	    });
 
+	// node label rect
+	let node_mouse_eve_literal = node_g.selectAll(".node_mouse_eve_g")
+	    .filter(function(d) { return d.type != "bnode" && d.predicate != epBrowser.rdfType; });
+	node_mouse_eve_literal.append("rect").attr("class", "literal_type_box").attr("transform", "translate(-80,-20)")
+	    .filter(function(d) { return d.type == "uri" }).attr("clip-path", "url(#round-corner)")
+	node_mouse_eve_literal.selectAll(".literal_type_box").filter(function(d) { return epBrowser.nodeColorType(d.type, d.predicate, d.endpoint).match(/_l$/);}).attr("class", "literal_type_box_l");
+	// node type
+	node_mouse_eve_literal.append("text").attr("class", "literal_type").attr("transform", "translate(76,-8)")
+	    .text(function(d){
+		let dtype = "String";
+		if(d.type == "uri") {
+		    dtype = "URI";
+		}else if(d.type != "literal") {
+		    if(d.datatype.match("http://www.w3.org/2001/XMLSchema")){
+			dtype = d.datatype.replace("http://www.w3.org/2001/XMLSchema#", "");
+			if(dtype == "string") dtype = "String";
+			else if(dtype == "integer") dtype = "Integer";
+			else if(dtype == "boolean") dtype = "Boolean";
+			else if(dtype == "hexBinary") dtype = "HexBin";
+			else if(dtype == "base64Binary") dtype = "Base64";
+		    }else{
+			dtype = d.datatype.match(/.+[\/#:]([^\/#:]*)$/)[1];
+		    }
+		}
+		return dtype;
+	    });
+	
 	// node label
-	node_mouse_eve.append("text")
+	node_mouse_eve.filter(function(d){ return d.type.match(/literal/) || (d.type == "uri" && d.predicate != epBrowser.rdfType); })
+	    .append("text")
 	    .text(function(d) {
-		let text = "";
-		if(d.type.match(/literal/)) text = d.key;
-		else if(d.class_label) text = d.class_label;
-		else if(d.predicate != epBrowser.rdfType && d.class) text = epBrowser.uriToShort(d.class, false, false, renderDiv, param);
+		let text = "node_" + d.id;
+		if(d.sparql_var_name) text = d.sparql_var_name.replace(/^\?/, "");
+		else if(d.sparql_suggest_var_name) text = d.sparql_suggest_var_name.replace(/^\?/, "");
+		return truncate(text, 18);
+	    })
+	    .attr("class", "node_label_uri")
+	    .attr("dx", "-76px").attr("dy", "-8px")
+	    .on("mouseover", function(d){
+		svg.select("#popup_label_" + d.id)
+		    .text(function(d) {
+			let text = "node_" + d.id;
+			if(d.var_name) text = d.var_name;
+			else if(d.sparql_suggest_var_name) text = d.sparql_suggest_var_name.replace(/^\?/, "");
+			if(text.length > 21) return text;
+		    }).style("display", "block"); })
+	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); });
+	// node class label
+	node_mouse_eve.filter(function(d){ return d.predicate == epBrowser.rdfType && d.class_label; }).append("text")
+	    .text(function(d) {
+		let text = d.class_label;
 		return truncate(text, 20);
 	    })
 	    .attr("class", "node_label")
-	    .attr("dx", "0px")
-	    .attr("dy", function(d){ if(d.type == "uri") return "-6px";
-				     else return "4px"; })
+	    .attr("dx", "0px").attr("dy", "-6px")
+	    .on("mouseover", function(d){
+		svg.select("#popup_label_" + d.id)
+		    .text(function(d) {
+			let text = d.class_label;
+			if(text.length > 23) return text;
+		    }).style("display", "block"); })
+	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); });
+	// node literal
+	node_mouse_eve.filter(function(d){ return d.type.match(/literal/); })
+	    .append("text")
+	    .text(function(d) {
+		let text = d.key;
+		return truncate(text, 20);
+	    })
+	    .attr("class", "node_label")
+	    .attr("dx", "0px").attr("dy", "12px")
 	    .on("mouseover", function(d){
 		svg.select("#popup_label_" + d.id)
 		    .text(function(d) {
 			let text = "";
-			if(d.type.match(/literal/)) text = d.key;
-			else if(d.class_label) text = d.class_label;
+			if(d.class_label) text = d.class_label;
+			if(text.length > 23) return text;
+		    }).style("display", "block"); })
+	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); });
+	// node blank
+	node_mouse_eve.filter(function(d){ return d.type == "bnode" })
+	    .append("text")
+	    .text(function(d) {
+		let text = "";
+		if(d.class_label) text = d.class_label;
+		else if(d.class) text = epBrowser.uriToShort(d.class, false, false, renderDiv, param);
+		return truncate(text, 20);
+	    })
+	    .attr("class", "node_label")
+	    .attr("dx", "0px").attr("dy", "4px")
+	    .on("mouseover", function(d){
+		svg.select("#popup_label_" + d.id)
+		    .text(function(d) {
+			let text = "";
+			if(d.class_label) text = d.class_label;
 			else if(d.predicate != epBrowser.rdfType && d.class) text = epBrowser.uriToShort(d.class, false, false, renderDiv, param);
 			if(text.length > 23) return text;
 		    }).style("display", "block"); })
-	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); })
+	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); });
+	// node uri
 	node_mouse_eve.append("text")
 	    .filter(function(d) { return d.type == "uri"; })
 	    .text(function(d) { return truncate(epBrowser.uriToShort(d.key, false, false, renderDiv, param), 20); })
@@ -523,7 +603,8 @@ var epBrowser = epBrowser || {
 	    .attr("dx", "0px")
 	    .attr("dy", "12px")
 	    .on("mouseover", function(d){ svg.select("#popup_label_" + d.id).text(function(d) { return "<" + d.key + ">"; }).style("display", "block"); })
-	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); })
+	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); });
+	// node popup text
 	node_mouse_eve.append("text")
 	    .attr("id", function(d){ return "popup_label_" + d.id; })
 	    .attr("class", "node_label")
@@ -542,7 +623,7 @@ var epBrowser = epBrowser || {
 	    .attr("dx", "0px")
 	    .attr("dy", "38px");
 
-	// literal type
+/*	// literal type
 	let node_mouse_eve_literal = node_g.selectAll(".node_mouse_eve_g")
 	    .filter(function(d) { return d.type == "literal" || d.type == "typed-literal"; });
 	node_mouse_eve_literal.append("rect").attr("class", "literal_type_box");
@@ -563,6 +644,7 @@ var epBrowser = epBrowser || {
 		}
 		return dtype;
 	    });
+*/
 	
 	// node mouse event
 	let endpoint = epBrowser.endpoint;
@@ -685,9 +767,6 @@ var epBrowser = epBrowser || {
 	}
 	
 	svg.selectAll("text").style("user-select", "none");
-
-	// rdf config
-	epBrowser.makeRdfConfig(renderDiv, param, data);
 	
 	// simulation
 	epBrowser.startSimulation(edge, edge_label, node_g);
@@ -720,7 +799,7 @@ var epBrowser = epBrowser || {
 
     // rdf config
     makeRdfConfig: function(renderDiv, param, data){
-	//console.log(data.nodes);
+	// console.log(data.nodes);
 
 	let rdfConfIndex = 0;
 	
@@ -746,7 +825,7 @@ var epBrowser = epBrowser || {
 	renderDiv.select("#rdf_config_prefix").node().innerHTML = rdfConfPrefix.join("\n");
 	renderDiv.select("#rdf_config_prefix").selectAll("span")
 	    .filter(function(){ if(!this.classList.contains("rdf_conf_comment")) this.id = "rdf_conf_index_" + rdfConfIndex++; });
-	    
+
 	//// rdf config model
 	let getRdfConfVarName = function(node, pre_object_name, subject){
 	    if(node.pref_id){
@@ -761,11 +840,9 @@ var epBrowser = epBrowser || {
 	    if(node.sparql_var_name) var_name = node.sparql_var_name.replace(/^\?/, "");
 	    else{ // var name suggestion
 		if(node.sparql_suggest_var_name) var_name = node.sparql_suggest_var_name.replace(/^\?/, "");
-		else if(node.class_label && node.class != "http://www.w3.org/2002/07/owl#Class") var_name = node.class_label.toLowerCase().replace(/ /g, "_"); //class label
-		else if(var_name.match(/^node_/) && node.key.match(/identifiers.org/)) var_name = node.key.match(/identifiers.org\/([^\/]+)/)[1]; // identifiers.org type
 		else if(subject && node.predicate == "http://www.w3.org/2000/01/rdf-schema#label") var_name = subject.toLowerCase() + "_label"; // _label
 		else if(subject && node.predicate == "http://purl.org/dc/terms/identifier") var_name = subject.toLowerCase() + "_id"; // _id
-		else if(var_name.match(/^[Nn]ode_\d+$/) && pre_object_name) var_name = pre_object_name; // before blank class label (?)
+		else if(var_name.match(/^[Nn]ode_\d+$/) && pre_object_name) var_name = pre_object_name.toLowerCase().replace(/\s/, "_"); // before blank class label (?)
 		if(!var_name.match(/^[Nn]ode_\d+$/)){
 		    epBrowser.sparqlVars[var_name] = 1;
 		    node.sparql_suggest_var_name = "?" + var_name;
@@ -2127,6 +2204,8 @@ var epBrowser = epBrowser || {
 	if(hub_node && !hub_node.child_count) hub_node.child_count = 0;
 
 	// replace type label of select node (for multi type)
+	let hub_var_name = false;
+	let hub_class_label = false;
 	if(!inverse && json[0].p.value == epBrowser.rdfType && json[0].c){
 	    for(let elm of epBrowser.graphData.nodes){
 		if(elm.id == epBrowser.selectNode){
@@ -2135,7 +2214,11 @@ var epBrowser = epBrowser || {
 		    if(json[0].c_label){
 			elm.class_label = json[0].c_label.value;
 			elm.class_label_type = json[0].c_label.type;
+			elm.sparql_suggest_var_name = "?" + elm.class_label.toLowerCase();
 		    }
+		    if(elm.sparql_var_name) hub_var_name = elm.sparql_var_name.replace(/^\?/, "");
+		    else if(elm.sparql_suggest_var_name) hub_var_name = elm.sparql_suggest_var_name.replace(/^\?/, "");
+		    if(elm.class_label) hub_class_label = elm.class_label;
 		    elm.classes = [];
 		    elm.class_labels = [];
 		    for(let i in json){
@@ -2201,6 +2284,14 @@ var epBrowser = epBrowser || {
 		    obj.class_label_type = json[i].c_label.type;
 		}
 	    }
+	    // suggest var name
+	    let suggest_var_name = false;
+	    if(obj.class_label && obj.class != "http://www.w3.org/2002/07/owl#Class") suggest_var_name = obj.class_label.replace(/ /g, "_"); //class label
+	    else if(obj.key.match(/identifiers.org/)) suggest_var_name = obj.key.match(/identifiers.org\/([^\/]+)/)[1]; // identifiers.org type
+	    else if(hub_var_name && obj.predicate == "http://www.w3.org/2000/01/rdf-schema#label") suggest_var_name = hub_var_name.toLowerCase() + "_label"; // _label
+	    else if(hub_var_name && obj.predicate == "http://purl.org/dc/terms/identifier") suggest_var_name = hub_var_name.toLowerCase() + "_id"; // _id
+	    else if(hub_class_label) suggest_var_name = hub_class_label.toLowerCase().replace(/\s/, "_"); // before blank class label (?)
+	    if(suggest_var_name) obj.sparql_suggest_var_name = "?" + suggest_var_name.toLowerCase();
 
 	    let source = epBrowser.selectNode;
 	    let target = nodeId;
