@@ -2206,11 +2206,12 @@ var epBrowser = epBrowser || {
 			elm.class_label = json[0].c_label.value;
 			elm.class_label_type = json[0].c_label.type;
 			elm.sparql_suggest_var_name = "?" + elm.class_label.replace(/ /, "_").toLowerCase();
+			if(elm.type == "bnode") elm.sparql_suggest_var_name += "_bnode";
 		    }
 		    if(elm.sparql_var_name) hub_var_name = elm.sparql_var_name.replace(/^\?/, "");
 		    else if(elm.sparql_suggest_var_name) hub_var_name = elm.sparql_suggest_var_name.replace(/^\?/, "");
 		    if(elm.class_label) hub_class_label = elm.class_label;
-		    hab_type = elm.type;
+		    hub_type = elm.type;
 		    elm.classes = [];
 		    elm.class_labels = [];
 		    for(let i in json){
@@ -2285,6 +2286,7 @@ var epBrowser = epBrowser || {
 	  //  else if(hub_var_name && obj.predicate == "http://purl.org/dc/terms/identifier") suggest_var_name = hub_var_name.toLowerCase() + "_id"; // _id
 	    else if(hub_var_name && obj.predicate.match(/http:\/\/purl.org\/dc\/terms\/./)) suggest_var_name = hub_var_name.toLowerCase() + "_" + obj.predicate.match(/http:\/\/purl.org\/dc\/terms\/(.+)/)[1]; // dcterms
 	    else if(hub_type == "bnode" && hub_class_label) suggest_var_name = hub_class_label.toLowerCase().replace(/\s/, "_"); // before blank class label (?)
+	    if(suggest_var_name && obj.type == "bnode") suggest_var_name += "_bnode";  // blank
 	    if(suggest_var_name) obj.sparql_suggest_var_name = "?" + suggest_var_name.toLowerCase();
 
 	    let source = epBrowser.selectNode;
