@@ -154,7 +154,7 @@ var epBrowser = epBrowser || {
 	    .attr("height", param.height)
 	    .on("mouseover", function(){ epBrowser.onMouseSvg = true; })
 	    .on("mouseout", function(){ epBrowser.onMouseSvg = false; });
-	svg.append("defs").append("clipPath").attr("id", "round-corner").append("rect").attr("x", 0).attr("y", 0).attr("width", 160).attr("height", 40).attr("rx", 8).attr("ry", 8);
+	svg.append("defs").append("clipPath").attr("id", "round-corner").append("rect").attr("x", 0).attr("y", 0).attr("width", 160).attr("height", 40).attr("rx", 6).attr("ry", 6);
 	let g = svg.append('g').attr("id", "zoom_g"); // g for zoom
 	g = g.append('g').attr("id", "drag_g");       // g for drag
 	g.attr("transform", "translate(" + param.width / 2 +"," + param.height / 2 + ")"); // position init
@@ -487,7 +487,7 @@ var epBrowser = epBrowser || {
 	// node
 	let rect = node_mouse_eve.append("rect")
 	    .attr("id", function(d) { return d.id; })
-	    .attr("rx", "8px").attr("ry", "8px")   // for iOS browser
+	    .attr("rx", "6px").attr("ry", "6px")   // for iOS browser
 	    .attr("class", function(d){
 		d.node_type = epBrowser.nodeColorType(d.type, d.predicate, d.endpoint);
 		return "node node_" + d.node_type;
@@ -500,7 +500,7 @@ var epBrowser = epBrowser || {
 	    .filter(function(d) { return d.type == "uri" }).attr("clip-path", "url(#round-corner)")
 	node_mouse_eve_literal.selectAll(".literal_type_box").filter(function(d) { return epBrowser.nodeColorType(d.type, d.predicate, d.endpoint).match(/_l$/);}).attr("class", "literal_type_box_l");
 	// node type
-	node_mouse_eve_literal.append("text").attr("class", "literal_type").attr("transform", "translate(76,-8)")
+	node_mouse_eve_literal.append("text").attr("class", "literal_type").attr("dx", "76px").attr("dy", "-9px")
 	    .text(function(d){
 		let dtype = "String";
 		if(d.type == "uri") {
@@ -522,15 +522,13 @@ var epBrowser = epBrowser || {
 	
 	// node label
 	node_mouse_eve.filter(function(d){ return d.type.match(/literal/) || (d.type == "uri" && d.predicate != epBrowser.rdfType); })
-	    .append("text")
+	    .append("text").attr("class", "node_label_uri").attr("dx", "-76px").attr("dy", "-9px")
 	    .text(function(d) {
 		let text = "node_" + d.id;
 		if(d.sparql_var_name) text = d.sparql_var_name.replace(/^\?/, "");
 		else if(d.sparql_suggest_var_name) text = d.sparql_suggest_var_name.replace(/^\?/, "");
 		return truncate(text, 18);
 	    })
-	    .attr("class", "node_label_uri")
-	    .attr("dx", "-76px").attr("dy", "-8px")
 	    .on("mouseover", function(d){
 		svg.select("#popup_label_" + d.id)
 		    .text(function(d) {
@@ -541,13 +539,12 @@ var epBrowser = epBrowser || {
 		    }).style("display", "block"); })
 	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); });
 	// node class label
-	node_mouse_eve.filter(function(d){ return d.predicate == epBrowser.rdfType && d.class_label; }).append("text")
+	node_mouse_eve.filter(function(d){ return d.predicate == epBrowser.rdfType && d.class_label; })
+	    .append("text").attr("class", "node_label").attr("dx", "0px").attr("dy", "-6px")
 	    .text(function(d) {
 		let text = d.class_label;
 		return truncate(text, 20);
 	    })
-	    .attr("class", "node_label")
-	    .attr("dx", "0px").attr("dy", "-6px")
 	    .on("mouseover", function(d){
 		svg.select("#popup_label_" + d.id)
 		    .text(function(d) {
@@ -557,13 +554,11 @@ var epBrowser = epBrowser || {
 	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); });
 	// node literal
 	node_mouse_eve.filter(function(d){ return d.type.match(/literal/); })
-	    .append("text")
+	    .append("text").attr("class", "node_label").attr("dx", "0px").attr("dy", "12px")
 	    .text(function(d) {
 		let text = d.key;
 		return truncate(text, 20);
 	    })
-	    .attr("class", "node_label")
-	    .attr("dx", "0px").attr("dy", "12px")
 	    .on("mouseover", function(d){
 		svg.select("#popup_label_" + d.id)
 		    .text(function(d) {
@@ -574,15 +569,13 @@ var epBrowser = epBrowser || {
 	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); });
 	// node blank
 	node_mouse_eve.filter(function(d){ return d.type == "bnode" })
-	    .append("text")
+	    .append("text").attr("class", "node_label").attr("dx", "0px").attr("dy", "4px")
 	    .text(function(d) {
 		let text = "";
 		if(d.class_label) text = d.class_label;
 		else if(d.class) text = epBrowser.uriToShort(d.class, false, false, renderDiv, param);
 		return truncate(text, 20);
 	    })
-	    .attr("class", "node_label")
-	    .attr("dx", "0px").attr("dy", "4px")
 	    .on("mouseover", function(d){
 		svg.select("#popup_label_" + d.id)
 		    .text(function(d) {
@@ -593,20 +586,14 @@ var epBrowser = epBrowser || {
 		    }).style("display", "block"); })
 	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); });
 	// node uri
-	node_mouse_eve.append("text")
-	    .filter(function(d) { return d.type == "uri"; })
+	node_mouse_eve.filter(function(d) { return d.type == "uri"; })
+	    .append("text").attr("class", "node_label").attr("dx", "0px").attr("dy", "12px")
 	    .text(function(d) { return truncate(epBrowser.uriToShort(d.key, false, false, renderDiv, param), 20); })
-	    .attr("class", "node_label")
-	    .attr("dx", "0px")
-	    .attr("dy", "12px")
 	    .on("mouseover", function(d){ svg.select("#popup_label_" + d.id).text(function(d) { return "<" + d.key + ">"; }).style("display", "block"); })
 	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); });
 	// node popup text
-	node_mouse_eve.append("text")
+	node_mouse_eve.append("text").attr("class", "node_label").attr("dx", "0px").attr("dy", "32px")
 	    .attr("id", function(d){ return "popup_label_" + d.id; })
-	    .attr("class", "node_label")
-	    .attr("dx", "0px")
-	    .attr("dy", "32px")
 	    .style("display", "none");
 	let popup_sparql_node_g = node_g.append("g")
 	    .attr("id", function(d){ return "popup_sparql_node_g_" + d.id; })
