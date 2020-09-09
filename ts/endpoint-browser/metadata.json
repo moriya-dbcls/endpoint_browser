@@ -4,7 +4,7 @@
     },
     "@id": "endpoint-browser",
     "stanza:label": "SPARQL support: Endpoint browser",
-    "stanza:definition": "Greeting.",
+    "stanza:definition": "Browser for RDF data in an endpoint using visual network graph.",
     "stanza:parameter": [
 	{
 	    "stanza:key": "endpoint",
@@ -14,9 +14,15 @@
 	},
 	{
 	    "stanza:key": "entry",
-	    "stanza:example": "http://rdf.jpostdb.org/entry/PRT206_1_Q9NYF8",
+	    "stanza:example": "http://rdf.jpostdb.org/entry/PRT810_1_Q9NYF8",
 	    "stanza:description": "entry",
 	    "stanza:required": true
+	},
+	{
+	    "stanza:key": "graphs",
+	    "stanza:example": "",
+	    "stanza:description": "graphs (e.g. http://jpost.org/graph/database,  http://jpost.org/graph/ontology",
+	    "stanza:required": false
 	},
 	{
 	    "stanza:key": "limit",
@@ -31,13 +37,13 @@
 	    "stanza:required": false
 	}
     ],
-    "stanza:usage": "<togostanza-endpoint-browser endpoint='https://tools.jpostdb.org/proxy/sparql' entry='http://rdf.jpostdb.org/entry/PRT206_1_Q9NYF8'></togostanza-endpoint-browser>",
+    "stanza:usage": "<togostanza-endpoint-browser endpoint='https://tools.jpostdb.org/proxy/sparql' entry='http://rdf.jpostdb.org/entry/PRT810_1_Q9NYF8'></togostanza-endpoint-browser>",
     "stanza:type": "Stanza",
     "stanza:context": "",
     "stanza:display": "",
     "stanza:provider": "DBCLS",
     "stanza:license": "MIT license",
-    "stanza:author": "MORIYA, Yuki",
+    "stanza:author": "Yuki Moriya",
     "stanza:address": "moriya@dbcls.rois.ac.jp",
     "stanza:contributor": [
     ],

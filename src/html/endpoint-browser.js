@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.3.2
+// version: 0.3.3
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,11 +7,12 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.3.2",
+    version: "0.3.3",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
     findEndpointApi: "find_endpoint_from_uri",
+    findSameTypeNodes: "find_same_type_nodes",
     debug: false,
     clickableFlag: true,
     labelFlag: true,
@@ -487,6 +488,7 @@ var epBrowser = epBrowser || {
 		    else return "translate(0,-" + (edge_label_g.select("#edge_label_" + d.id).node().getBBox().height - 2) + ")";
 		});
 	}
+	
 	// node mouse event g
 	let node_mouse_eve = node_g
 //	    .filter(function(d) { return d.skip != 1; })
@@ -692,7 +694,7 @@ var epBrowser = epBrowser || {
 		d3.select(this).select("rect").attr("class", function(d){ return "node node_" + d.node_type; });
 	    })
 	    .style("cursor", "pointer");
-
+				
 	// identifiers.org && http://purl.
 	if(epBrowser.outerEpFlag && epBrowser.outerEp === undefined){
 	    let federated_g = node_g.filter(function(d){
@@ -735,6 +737,96 @@ var epBrowser = epBrowser || {
 	}else{
 	    node_g.selectAll(".select_outer_endpoint").remove();
 	}
+	// right click
+	svg.selectAll(".node_mouse_eve_g")
+	    .on("contextmenu", function(d){
+		if(epBrowser.subgraphMode || epBrowser.removeMode) return 0;
+		d3.event.preventDefault();
+		let popup = renderDiv.select("#var_name_form").html("").style("display", "block");
+		let modeFlag = false;
+		if(this.attributes){
+		    modeFlag = true;
+		    epBrowser.setPopupPosition(renderDiv, popup, this);
+		}
+		let popdiv = popup.append("div").attr("class", "nodemenu");
+		let ul = popdiv.append("ul").attr("class", "nodemenu");
+		let ad_param = epBrowser.sameTypeNodesParam = {};
+		ad_param.id = d.id;
+		ad_param.parentId = d.subject_id;
+		ad_param.targetPredicate = d.predicate;
+		ad_param.targetClass = "";
+		if(d.class) ad_param.targetClass = d.class;
+		ul.append("li").attr("class", function(){
+		    if( modeFlag) return "nodemenu";
+		    else return "nodemenu_off";
+		}).text("search inverse link")
+		    .filter(function(){ return modeFlag; })
+		    .on("click", function(){
+			epBrowser.inverseFlag = true;
+			epBrowser.forcegraph(renderDiv, param);
+			for(let i in data.nodes){
+			    if(data.nodes[i].id == ad_param.id){
+				svg.select("#node_mouse_eve_g_" + ad_param.id).on("click")(data.nodes[i]);
+				epBrowser.hidePopupInputDiv(renderDiv);
+				break;
+			    }
+			}
+		    });
+		let bnode_sample_count = 0;
+		for(let node of data.nodes){
+		    if(node.id == d.subject_id){
+			if(node.type == "bnode") bnode_sample_count = node.sample_count;
+			break;
+		    }
+		}
+		ul.append("li").attr("class", function(){
+		    if(d.type != "class" && d.type != "bnode" && !d.child_count && (d.sample_count > 1 || bnode_sample_count > 1)) return "nodemenu";
+		    else return "nodemenu_off";
+		}).text("show same-class nodes")
+		    .filter(function(){ return d.type != "class" && d.type != "bnode" && !d.child_count && (d.sample_count > 1 || bnode_sample_count > 1); })
+		    .on("click", function(){
+			if(epBrowser.clickableFlag == true){
+			    epBrowser.clickableFlag = false;
+			    epBrowser.selectNode = ad_param.id;
+			    let parent_node = false;
+			    for(let elm of data.nodes){
+				if(elm.id == ad_param.parentId){
+				    parent_node = elm;
+				    break;
+				}
+			    }
+			    let f = 0;
+			    for(let i = 0; i < param.apiArg.length; i++){
+				if(param.apiArg[i].match(/^entry=/)){
+				    param.apiArg[i] = 'entry=' + encodeURIComponent(parent_node.key);
+				    if(parent_node.type == "bnode"){
+					let [subject, link] = epBrowser.getBlankNodeLink(parent_node.id, []);
+					param.apiArg[i] = 'entry=' + encodeURIComponent(subject);
+					param.apiArg[i] += "&bnode=1&b_p=" + encodeURIComponent(JSON.stringify(link));
+					if(parent_node.class) param.apiArg[i] += "&b_t=" + encodeURIComponent(parent_node.class);
+				    }
+				    // }else if(param.apiArg[i].match(/^inv=/)){
+				    //	param.apiArg.splice(i, 1)
+				}else if(param.apiArg[i].match(/^endpoint=/)){
+				    if(parent_node.endpoint) param.apiArg[i] = 'endpoint=' + encodeURIComponent(parent_node.endpoint);
+				    else param.apiArg[i] = 'endpoint=' + encodeURIComponent(epBrowser.endpoint);
+				}else if(param.apiArg[i].match(/^target_predicate=/)){
+				    param.apiArg[i] = 'target_predicate=' + encodeURIComponent(ad_param.targetPredicate);
+				    f = 1;
+				}else if(param.apiArg[i].match(/^target_class=/)){
+				    param.apiArg[i] = 'target_class=' + encodeURIComponent(ad_param.targetClass);
+				}
+			    }
+			    if(!f){
+				param.apiArg.push('target_predicate=' + encodeURIComponent(ad_param.targetPredicate));
+				param.apiArg.push('target_class=' + encodeURIComponent(ad_param.targetClass));
+			    }
+			    let uri = epBrowser.api + epBrowser.findSameTypeNodes;
+			    console.log(param.apiArg.join("  "));
+			    epBrowser.fetchReq("post", uri, renderDiv, param, epBrowser.showSameTypeNodes);
+			}
+		    });
+	    });
 	
 	svg.selectAll("text").style("user-select", "none");
 
@@ -898,7 +990,7 @@ var epBrowser = epBrowser || {
 			//else config += short_object_uri + object_label + "\n";
 			if(node.rdf_conf_subject == undefined){
 			    let tmp = short_object_uri.match(/^(.*):([^:]+)$/);
-			    short_object_uri = tmp[1] + ":<span class='rdf_conf_new_subject' alt='" + node.id + "'>" + tmp[2] + "</span>";
+			    short_object_uri = tmp[1] + ":<span class='rdf_conf_new_subject' alt='" + node.id + "_" + i + "'>" + tmp[2] + "</span>";
 			}else if(node.rdf_conf_subject == 1){
 			    let tmp = object.match(/^(<span.+>)(.+)(<\/span>)$/);
 			  //  short_object_uri = tmp[1] + snakeToCamel(tmp[2]) + tmp[3];  // clickable
@@ -1113,7 +1205,7 @@ var epBrowser = epBrowser || {
 	    });
 	////// set new subject
 	let setNewSubject = (element) => {
-	    let id = d3.select(element).attr("alt");
+	    let id = d3.select(element).attr("alt").split("_")[0];
 	    let cardDiv = renderDiv.select("#rdf_conf_card_div");
 	    if(cardDiv.style("display") == "block"){
 		cardDiv.style("display", "none");
@@ -1155,6 +1247,11 @@ var epBrowser = epBrowser || {
 		setNewSubject(this);
 	    }).on("keydown", function(){
 		if(d3.event.key === 'Enter') setNewSubject(this);
+	    }).on("contextmenu", function(){
+		console.log(d3.select(this).attr("alt"));
+		let tmp = d3.select(this).attr("alt").split("_");
+		epBrowser.setPopupPosition(renderDiv, renderDiv.select("#var_name_form"), this);
+		renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + tmp[0]).on("contextmenu")(data.nodes[tmp[1]]);
 	    });
 	renderDiv.selectAll(".rdf_conf_custom_prefix").style("color", "#1680c4");
 	renderDiv.selectAll(".rdf_conf_custom_node_name").style("color", "#1680c4");
@@ -1815,7 +1912,7 @@ var epBrowser = epBrowser || {
 	    if(flag){
 		epBrowser.labelFlag = false;
 		svg.selectAll(".edge_label").attr("display", "block");
-		svg.selectAll(".edge_label_bg").attr("display", "block");
+		svg.selectAll(".edge_label_bd").attr("display", "block");
 		reDrawGraph();
 	    }else{
 		epBrowser.labelFlag = true;
@@ -2014,6 +2111,27 @@ var epBrowser = epBrowser || {
 	    }
 	});
     },
+
+    showSameTypeNodes: function(api_json, renderDiv, param){
+	epBrowser.clickableFlag = true;
+	let popup = renderDiv.select("#var_name_form").html("").style("display", "block");
+	let popdiv = popup.append("div").attr("class", "nodemenu");
+	let ul = popdiv.append("ul").attr("class", "nodemenu");
+	for(let uri of api_json.data){
+	    ul.append("li").attr("class", "nodemenu").text(epBrowser.uriToShort(uri, false, false, renderDiv, param))
+		.attr("alt", uri)
+		.on("click", function(){
+		    for(let node of epBrowser.graphData.nodes){
+			if(node.id == epBrowser.selectNode){
+			    node.key = d3.select(this).attr("alt");
+			    epBrowser.forcegraph(renderDiv, param);
+			    epBrowser.hidePopupInputDiv(renderDiv);
+			    break;
+			}
+		    }
+		});
+	}
+    },
     
     hidePopupInputDiv: function(renderDiv){
 	let div = renderDiv.select("#var_name_form").style("display", "none");
@@ -2097,7 +2215,7 @@ var epBrowser = epBrowser || {
 		if(x2 > x1){ // normal
 		    x1 += x_margin;
 		    x2 -= x_margin;
-		    // return "M" + x1 + "," + y1  + " L" + x2 + "," + y2; // straight line
+		   // return "M" + x1 + "," + y1  + " L" + x2 + "," + y2; // straight line
 		    return "M" + x1 + " " + y1  + " C" + (x1 + 80) + " " + y1 + "," + (x2 - 80) + " " + y2 + "," + x2 + " " + y2; // Bezier curve
 		}else{ // reverse (Bezier curve)
 		    let cy = y2;

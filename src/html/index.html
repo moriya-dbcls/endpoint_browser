@@ -148,7 +148,9 @@
 	  <ul>
 	    <li>endpoint<br><input type="text" size="100" id="endpoint"></li>
 	    <li>start node<br> <input type="text" size="100" id="entry"></li>
-	    <li><span style="color: #4886ad; cursor: pointer; font-size: 12px;" onclick="switchOption();">&lt;option&gt;</span><span id="options" style="display:none;font-size: 12px;"> limit of edge type: <input type="text" id="limit" size="5" value="50">, <input type="checkbox" id="inv" value="1"> start from inverse-edge</span></li>
+	    <li><span style="color: #4886ad; cursor: pointer; font-size: 12px;" onclick="switchOption();">&lt;option&gt;</span></li>
+	    <li id="options_1" style="display: none;">graphs<br><input type="text" size="100" id="graphs"></li>
+	    <li id="options_2" style="display: none;"><span style="font-size: 12px;"> limit of edge type: <input type="text" id="limit" size="5" value="50">, <input type="checkbox" id="inv" value="1"> start from inverse-edge</span></li>
 	  </ul>
 	  <input type="button" value="start" onclick="startSparqlSupportGui();">
 	  <br>
@@ -175,6 +177,7 @@
       function startSparqlSupportGui(){
 	  let endpoint = document.getElementById("endpoint").value;
 	  let entry = document.getElementById("entry").value;
+	  let graphs = document.getElementById("graphs").value;
 	  if(entry && endpoint.match(/^https*:\/\//)){
 	      let limit = document.getElementById("limit").value;
 	      let inv = document.getElementById("inv").checked;
@@ -185,6 +188,7 @@
 	      stanza.setAttribute("id", "endpoint-browser-stanza");
 	      stanza.setAttribute("endpoint", endpoint);
 	      stanza.setAttribute("entry", entry);
+	      stanza.setAttribute("graphs", graphs);
 	      if(limit.match(/^\d+/)) stanza.setAttribute("limit", limit);
 	      if(inv) stanza.setAttribute("inv", 1);
 	      stanzaDiv.appendChild(stanza);
@@ -195,20 +199,31 @@
 	  if(f == 1){
 	      document.getElementById("endpoint").value = "http://dev.togogenome.org/sparql";
 	      document.getElementById("entry").value = "http://togogenome.org/gene/9606:BRCA1";
+	      document.getElementById("graphs").value = "";
+	      document.getElementById("options_1").style.display = "none";
+	      document.getElementById("options_2").style.display = "none";
 	  }else if(f == 2){
 	      document.getElementById("endpoint").value = "https://db-dev.jpostdb.org/proxy/sparql";
 	      document.getElementById("entry").value = "http://rdf.jpostdb.org/entry/PRT810_1_Q9NYF8";
+	      document.getElementById("graphs").value = "";
+	      document.getElementById("options_1").style.display = "none";
+	      document.getElementById("options_2").style.display = "none";
 	  }else{
 	      document.getElementById("endpoint").value = "https://integbio.jp/rdf/sparql";
 	      document.getElementById("entry").value = "http://refex.dbcls.jp/entry/RFX0000569780";
+	      document.getElementById("graphs").value = "http://refex.dbcls.jp/rdf/fantom5, http://integbio.jp/rdf/ontology/dcterms/2012-06-14";
+	      document.getElementById("options_1").style.display = "block";
+	      document.getElementById("options_2").style.display = "block";
 	  }
       }
 
       function switchOption(){
-	  console.log(1);
-	  let opt = document.getElementById("options");
-	  if(opt.style.display == "none") opt.style.display = "inline";
-	  else opt.style.display = "none";
+          let opt = document.getElementById("options_1");
+          if(opt.style.display == "none") opt.style.display = "block";
+          else opt.style.display = "none";
+          opt = document.getElementById("options_2");
+          if(opt.style.display == "none") opt.style.display = "block";
+          else opt.style.display = "none";
       }
 
       document.addEventListener("keydown", e => {
