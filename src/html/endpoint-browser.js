@@ -479,12 +479,14 @@ var epBrowser = epBrowser || {
 	    .attr("display", function(){
 		if(epBrowser.labelFlag == true) return "none";
 		else return "block"});
-	edge_label_bg.attr("width", function(d){ return edge_label_g.select("#edge_label_" + d.id).node().getBBox().width; })
-	    .attr("height", function(d){ return edge_label_g.select("#edge_label_" + d.id).node().getBBox().height; })
-	    .attr("transform", function(d){
-		if(epBrowser.nodeGridFlag) return "translate(-" + edge_label_g.select("#edge_label_" + d.id).node().getBBox().width + ", -" + (edge_label_g.select("#edge_label_" + d.id).node().getBBox().height - 2) + ")";
-		else return "translate(0,-" + (edge_label_g.select("#edge_label_" + d.id).node().getBBox().height - 2) + ")";
-	    });
+	if(!epBrowser.labelFlag){
+	    edge_label_bg.attr("width", function(d){ return edge_label_g.select("#edge_label_" + d.id).node().getBBox().width; })
+		.attr("height", function(d){ return edge_label_g.select("#edge_label_" + d.id).node().getBBox().height; })
+		.attr("transform", function(d){
+		    if(epBrowser.nodeGridFlag) return "translate(-" + edge_label_g.select("#edge_label_" + d.id).node().getBBox().width + ", -" + (edge_label_g.select("#edge_label_" + d.id).node().getBBox().height - 2) + ")";
+		    else return "translate(0,-" + (edge_label_g.select("#edge_label_" + d.id).node().getBBox().height - 2) + ")";
+		});
+	}
 	// node mouse event g
 	let node_mouse_eve = node_g
 //	    .filter(function(d) { return d.skip != 1; })
