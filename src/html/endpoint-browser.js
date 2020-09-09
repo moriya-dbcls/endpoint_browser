@@ -2280,12 +2280,12 @@ var epBrowser = epBrowser || {
 	    }
 	    // suggest var name
 	    let suggest_var_name = false;
-	    if(obj.class_label && obj.class != "http://www.w3.org/2002/07/owl#Class") suggest_var_name = obj.class_label.replace(/ /g, "_"); //class label
+	    if(obj.class_label && obj.class != "http://www.w3.org/2002/07/owl#Class") suggest_var_name = obj.class_label.replace(/\s/g, "_"); //class label
 	    else if(obj.key.match(/identifiers.org/)) suggest_var_name = obj.key.match(/identifiers.org\/([^\/]+)/)[1]; // identifiers.org type
 	    else if(hub_var_name && obj.predicate == "http://www.w3.org/2000/01/rdf-schema#label") suggest_var_name = hub_var_name.toLowerCase() + "_label"; // _label
 	  //  else if(hub_var_name && obj.predicate == "http://purl.org/dc/terms/identifier") suggest_var_name = hub_var_name.toLowerCase() + "_id"; // _id
 	    else if(hub_var_name && obj.predicate.match(/http:\/\/purl.org\/dc\/terms\/./)) suggest_var_name = hub_var_name.toLowerCase() + "_" + obj.predicate.match(/http:\/\/purl.org\/dc\/terms\/(.+)/)[1]; // dcterms
-	    else if(hub_type == "bnode" && hub_class_label) suggest_var_name = hub_class_label.toLowerCase().replace(/\s/, "_"); // before blank class label (?)
+	    else if(hub_type == "bnode" && hub_class_label) suggest_var_name = hub_class_label.toLowerCase().replace(/\s/g, "_"); // before blank class label (?)
 	    if(suggest_var_name && obj.type == "bnode") suggest_var_name += "_bnode";  // blank
 	    if(suggest_var_name) obj.sparql_suggest_var_name = "?" + suggest_var_name.toLowerCase();
 
