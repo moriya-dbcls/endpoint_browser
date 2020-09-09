@@ -11,6 +11,8 @@
 * `entry`
   * default: http://rdf.jpostdb.org/entry/PRT810_1_Q9NYF8
   * example: http://rdf.jpostdb.org/entry/PRT810_1_Q9NYF8
+* `graphs`
+  * example: http://jpost.org/graph/database, http://jpost.org/graph/ontology
 * `limit`
   * default: 50
 * `inv`
@@ -26,7 +28,7 @@
 ## `add_code`
 
 ```javascript
-({entry, limit, inv, bnode, b_p, b_t})=>{
+({entry, limit, inv, bnode, b_p, b_t, graphs})=>{
   inv = parseInt(inv);
   let code = "";
   if(entry.match(/^https*:\/\/.+/) || entry.match(/^urn:\w+:/) || entry.match(/^ftp:/) || entry.match(/^mailto:/)) entry = "<" + entry + ">";
@@ -49,7 +51,13 @@
   }
   let limit_code = "LIMIT " + limit;
   if(limit == 0) limit_code  = "";
-  return {subject: code, limit: limit_code};
+  let graph_code = "";
+  if(graphs){
+    for(let uri of graphs.split(/, /)){
+      if(uri.match(/^https*:\/\/.+/)) graph_code += "FROM <" + uri + ">\n";
+    }
+  }
+  return {subject: code, limit: limit_code, graph: graph_code};
 };
 ```
 
@@ -62,6 +70,7 @@
 ```sparql
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT DISTINCT ?s ?p ?c ?c_label (SAMPLE(?o) AS ?o_sample) (COUNT(?o) AS ?o_count) ?p_label
+{{add_code.graph}}
 WHERE {
 {{add_code.subject}}
   OPTIONAL {
@@ -99,6 +108,7 @@ ORDER BY ?p
 ```sparql
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT ?o ?label
+{{add_code.graph}}
 WHERE {
   VALUES ?o { {{o_sample_list}} }
   OPTIONAL {
@@ -112,6 +122,7 @@ WHERE {
 ```sparql
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT DISTINCT ?s ?o ?o_label (COUNT(?x) AS ?c)
+{{add_code.graph}}
 WHERE {
 {{add_code.subject}}
   ?s a ?o .
