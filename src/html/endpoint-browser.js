@@ -733,25 +733,6 @@ var epBrowser = epBrowser || {
 	}else{
 	    node_g.selectAll(".select_outer_endpoint").remove();
 	}
-	// right click
-	svg.selectAll(".node_g")
-	   // .filter(function(d){ return d.sample_count > 1; })
-	    .on("contextmenu", function(d){
-		d3.event.preventDefault();
-		let popup = renderDiv.select("#var_name_form").html("").style("display", "block");
-		console.log(this);
-		epBrowser.setPopupPosition(renderDiv, popup, this);
-		let popdiv = popup.append("div").style("background-color", "white");
-		let ul = popdiv.append("ul");
-		ul.append("li").text("expand")
-		    .on("click", function(d){ console.log("expand"); });
-		ul.append("li").text("search subject")
-		    .on("click", function(d){ console.log("subject"); });
-		if( d.sample_count > 1 && !d.child_count){
-		    ul.append("li").text("show element")
-			.on("click", function(d){ console.log("element"); });
-		}
-	    });
 	
 	svg.selectAll("text").style("user-select", "none");
 
