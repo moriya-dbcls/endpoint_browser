@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.3.1
+// version: 0.3.2
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.3.1",
+    version: "0.3.2",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -436,7 +436,8 @@ var epBrowser = epBrowser || {
 	    .filter(function(d) { return d.skip != 1; });
 	
 	edges_layer.selectAll(".edge").remove();
-	edges_label_layer.selectAll(".edge_label").remove();	
+	edges_label_layer.selectAll(".edge_label").remove();
+	edges_label_layer.selectAll(".edge_label_bg").remove();	
 	nodes_layer.selectAll(".node_mouse_eve_g").remove();
 	nodes_layer.selectAll(".sparql_node").remove();
 	    
@@ -465,6 +466,8 @@ var epBrowser = epBrowser || {
 	    });
 
 	// edge label
+	let edge_label_bg = edge_label_g.append("rect")
+	    .attr("class", "edge_label_bg");
 	let edge_label = edge_label_g.append("text")
 	    .text(function(d) { return d.predicate_label; })
 	    .attr("id", function(d){ return "edge_label_" + d.id;} )
@@ -476,7 +479,12 @@ var epBrowser = epBrowser || {
 	    .attr("display", function(){
 		if(epBrowser.labelFlag == true) return "none";
 		else return "block"});
-
+	edge_label_bg.attr("width", function(d){ return edge_label_g.select("#edge_label_" + d.id).node().getBBox().width; })
+	    .attr("height", function(d){ return edge_label_g.select("#edge_label_" + d.id).node().getBBox().height; })
+	    .attr("transform", function(d){
+		if(epBrowser.nodeGridFlag) return "translate(-" + edge_label_g.select("#edge_label_" + d.id).node().getBBox().width + ", -" + (edge_label_g.select("#edge_label_" + d.id).node().getBBox().height - 2) + ")";
+		else return "translate(0,-" + (edge_label_g.select("#edge_label_" + d.id).node().getBBox().height - 2) + ")";
+	    });
 	// node mouse event g
 	let node_mouse_eve = node_g
 //	    .filter(function(d) { return d.skip != 1; })
@@ -751,7 +759,7 @@ var epBrowser = epBrowser || {
 	epBrowser.makeRdfConfig(renderDiv, param, data);
 	
 	// simulation
-	epBrowser.startSimulation(edge, edge_label, node_g);
+	epBrowser.startSimulation(edge, edge_label, edge_label_bg, node_g);
 	
 	// node drag
 	function dragstarted(d) {
@@ -1183,7 +1191,7 @@ var epBrowser = epBrowser || {
 	    .style("left", (element.getBoundingClientRect().left + pageXOffset - renderDiv.node().offsetLeft + x) + "px");
     },
     
-    startSimulation: function(edge, edge_label, node_g){
+    startSimulation: function(edge, edge_label, edge_label_bg, node_g){
 	let simulation = epBrowser.simulation;
 	let data = epBrowser.graphData;
 	
@@ -1227,6 +1235,8 @@ var epBrowser = epBrowser || {
 	    // edge label
 	    edge_label.attr("dx", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "x", d.has_reverse); })
 		.attr("dy", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "y", d.has_reverse); });
+	    edge_label_bg.attr("x", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "x", d.has_reverse); })
+		.attr("y", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "y", d.has_reverse); });
 	    // node
 	    node_g.attr("transform", function(d) {
 		if(epBrowser.nodeGridFlag) d.x = d.layer * 360 + epBrowser.entryNodeIndex.x;
@@ -1822,10 +1832,12 @@ var epBrowser = epBrowser || {
 	    if(flag){
 		epBrowser.labelFlag = false;
 		svg.selectAll(".edge_label").attr("display", "block");
+		svg.selectAll(".edge_label_bg").attr("display", "block");
 		reDrawGraph();
 	    }else{
 		epBrowser.labelFlag = true;
 		svg.selectAll(".edge_label").attr("display", "none");
+		svg.selectAll(".edge_label_bg").attr("display", "none");
 		reDrawGraph();
 	    }
 	}
@@ -2102,7 +2114,8 @@ var epBrowser = epBrowser || {
 		if(x2 > x1){ // normal
 		    x1 += x_margin;
 		    x2 -= x_margin;
-		    return "M" + x1 + "," + y1  + " L" + x2 + "," + y2;
+		    // return "M" + x1 + "," + y1  + " L" + x2 + "," + y2; // straight line
+		    return "M" + x1 + " " + y1  + " C" + (x1 + 80) + " " + y1 + "," + (x2 - 80) + " " + y2 + "," + x2 + " " + y2; // Bezier curve
 		}else{ // reverse (Bezier curve)
 		    let cy = y2;
 		    if(y1 < y2){ // reverse lower
@@ -2140,8 +2153,10 @@ var epBrowser = epBrowser || {
 		if(x2 > x1){ // normal
 		    x1 += x_margin;
 		    x2 -= x_margin;
-		    if(label == "x") return (x1 + x2 * 9) / 10;
-		    else return (y1 + y2 * 9) / 10;
+		  /*  if(label == "x") return (x1 + x2 * 9) / 10; // for straight line
+		      else return (y1 + y2 * 9) / 10;  */
+		    if(label == "x") return x2 - 10; // for Bezier curve
+		    else return y2 - 6;
 		}else{
 		    if(y1 < y2){ // reverse lower
 			if(label == "x") return x1;

@@ -5,11 +5,17 @@ text {
 text#popup_label {
     fill: #ff4d7f;
     font-size: 12px;
+    font-weight: bold;
 }
 
 text.edge_label {
     fill: #1680c4;
     font-size: 10px;
+}
+
+rect.edge_label_bg {
+    fill: white;
+    opacity: 0.5;
 }
 
 text.edge_label_hl {
@@ -126,34 +132,14 @@ rect.node {
     height: 40px;
     x: -80px;
     y: -20px;
-    rx: 8px;
-    ry: 8px;
+    rx: 6px;
+    ry: 6px;
 }
-
-/*
-rect.literal_type_box {
-    stroke: none;
-    fill: black;
-    width: 16px;
-    height: 40px;
-    x: 64px;
-    y: -20px;
-}
-
-text.literal_type {
-    stroke: none;
-    fill: white;
-    font-size: 10px;
-    font-style: italic;
-    font-weight: bold;
-    text-anchor: middle;
-}
-*/
 
 rect.literal_type_box {
     stroke: none;
     fill: black;
-    opacity: 0.5;
+    opacity: 0.6;
     width: 160px;
     height: 16px;
 }
@@ -227,8 +213,8 @@ rect.sparql_node_rect {
     height: 20px;
     x: -80px;
     y: 24px;
-    rx: 8px;
-    ry: 8px;
+    rx: 6px;
+    ry: 6px;
 }
 
 rect.hover {
@@ -283,6 +269,34 @@ rect.sparql_path, rect.sparql_blank{
 #query_dummy .sparql_prefix {
     color: #db7d25;
 }
+
+div.nodemenu {
+    background-color: white;
+    border: solid 1px black;
+    max-height: 200px;
+    overflow: auto;
+}
+
+ul.nodemenu {
+    list-style-type: none;
+    padding: 0px;
+    margin: 10px;
+}
+
+li.nodemenu {
+    cursor: pointer;
+    font-size: 12px;
+}
+
+li.nodemenu:hover {
+    background-color: #dddddd;
+}
+
+li.nodemenu_off {
+    color: #bbbbbb;
+    font-size: 12px;
+}
+
 span:focus {
     outline: none;
     background: linear-gradient(transparent 60%, #cce0f3 50%);
