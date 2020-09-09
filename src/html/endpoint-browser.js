@@ -562,8 +562,7 @@ var epBrowser = epBrowser || {
 	    .on("mouseover", function(d){
 		svg.select("#popup_label_" + d.id)
 		    .text(function(d) {
-			let text = "";
-			if(d.class_label) text = d.class_label;
+			let text = d.key;
 			if(text.length > 23) return text;
 		    }).style("display", "block"); })
 	    .on("mouseout", function(d){ svg.select("#popup_label_" + d.id).style("display", "none"); });
