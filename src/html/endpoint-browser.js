@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.3.3
+// version: 0.3.4
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.3.3",
+    version: "0.3.4",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -145,6 +145,7 @@ var epBrowser = epBrowser || {
 	param.cy = param.height / 2;
 	
 	epBrowser.endpoint = stanza_params["endpoint"];
+	epBrowser.graph = stanza_params["graphs"];
 	
 	// make DOM
 	//// SVG DOM
@@ -212,7 +213,14 @@ var epBrowser = epBrowser || {
 	sel.on("change", function(){
 	    let value = this.value;
 	    if(value == "download" || value == "rdf-conf-chk"){
-		rdfConfig.select("#rdf_conf_form_endpoint").attr("value", "endpoint: " + epBrowser.endpoint);
+		let endpoint_yaml = "endpoint: " + epBrowser.endpoint;
+		if(epBrowser.graph.match(/^\s*https*:\/\//)){
+		    endpoint_yaml += "\n\ngraph:\n";
+		    for(let graph of epBrowser.graph.replace(/\s/g, "").split(/,/)){
+			if(graph.match(/^https*:\/\//)) endpoint_yaml += "  - " + graph + "\n";
+		    }
+		}
+		rdfConfig.select("#rdf_conf_form_endpoint").attr("value", endpoint_yaml);
 		rdfConfig.select("#rdf_conf_form_prefix").attr("value", rdfConfig.select("#rdf_config_prefix").html().replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">"));
 		rdfConfig.select("#rdf_conf_form_model").attr("value", rdfConfig.select("#rdf_config_model").html().replace(/> cardinality </g, "><").replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">").replace(/ +\{\{expand subject\}\}/, ""));
 		rdfConfig.select("#rdf_conf_form_sparql").attr("value", rdfConfig.select("#rdf_config_sparql").html());
@@ -989,7 +997,7 @@ var epBrowser = epBrowser || {
 			//if(short_object_uri.match(/^:/)) config += "&lt;" + node.key + "&gt;" + object_label + "\n";
 			//else config += short_object_uri + object_label + "\n";
 			if(node.rdf_conf_subject == undefined){
-			    let tmp = short_object_uri.match(/^(.*):([^:]+)$/);
+			    let tmp = short_object_uri.match(/^(.*):([^:]*)$/);
 			    short_object_uri = tmp[1] + ":<span class='rdf_conf_new_subject' alt='" + node.id + "_" + i + "'>" + tmp[2] + "</span>";
 			}else if(node.rdf_conf_subject == 1){
 			    let tmp = object.match(/^(<span.+>)(.+)(<\/span>)$/);

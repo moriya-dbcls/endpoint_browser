@@ -205,9 +205,10 @@
 	  }else if(f == 2){
 	      document.getElementById("endpoint").value = "https://db-dev.jpostdb.org/proxy/sparql";
 	      document.getElementById("entry").value = "http://rdf.jpostdb.org/entry/PRT810_1_Q9NYF8";
-	      document.getElementById("graphs").value = "";
-	      document.getElementById("options_1").style.display = "none";
-	      document.getElementById("options_2").style.display = "none";
+	      document.getElementById("graphs").value = "http://jpost.org/graph/database, http://jpost.org/graph/ontology";
+	      document.getElementById("options_1").style.display = "block";
+	      document.getElementById("options_2").style.display = "block";
+
 	  }else{
 	      document.getElementById("endpoint").value = "https://integbio.jp/rdf/sparql";
 	      document.getElementById("entry").value = "http://refex.dbcls.jp/entry/RFX0000569780";
@@ -218,12 +219,16 @@
       }
 
       function switchOption(){
-          let opt = document.getElementById("options_1");
-          if(opt.style.display == "none") opt.style.display = "block";
-          else opt.style.display = "none";
-          opt = document.getElementById("options_2");
-          if(opt.style.display == "none") opt.style.display = "block";
-          else opt.style.display = "none";
+	  let opt = document.getElementById("options_1");
+	  let opt2 = document.getElementById("options_2");
+	  if(opt.style.display == "none"){
+	      opt.style.display = "block";
+	      opt2.style.display = "block";
+	  }else{
+	      opt.style.display = "none";
+	      opt2.style.display = "none";
+	      document.getElementById("graphs").value = "";
+	  }
       }
 
       document.addEventListener("keydown", e => {
