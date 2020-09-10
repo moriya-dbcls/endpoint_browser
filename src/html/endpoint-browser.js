@@ -214,7 +214,7 @@ var epBrowser = epBrowser || {
 	    let value = this.value;
 	    if(value == "download" || value == "rdf-conf-chk"){
 		let endpoint_yaml = "endpoint: " + epBrowser.endpoint;
-		if(epBrowser.graph.match(/^\s*https*:\/\//)){
+		if(epBrowser.graph && epBrowser.graph.match(/^\s*https*:\/\//)){
 		    endpoint_yaml += "\n\ngraph:\n";
 		    for(let graph of epBrowser.graph.replace(/\s/g, "").split(/,/)){
 			if(graph.match(/^https*:\/\//)) endpoint_yaml += "  - " + graph + "\n";
@@ -764,6 +764,7 @@ var epBrowser = epBrowser || {
 		ad_param.targetPredicate = d.predicate;
 		ad_param.targetClass = "";
 		if(d.class) ad_param.targetClass = d.class;
+/*	   // inverse link     
 		ul.append("li").attr("class", function(){
 		    if( modeFlag) return "nodemenu";
 		    else return "nodemenu_off";
@@ -780,6 +781,7 @@ var epBrowser = epBrowser || {
 			    }
 			}
 		    });
+*/
 		let bnode_sample_count = 0;
 		for(let node of data.nodes){
 		    if(node.id == d.subject_id){
@@ -2379,6 +2381,7 @@ var epBrowser = epBrowser || {
 	    if(inverse) obj.predicate = "inv-" + obj.predicate;
 	    if(epBrowser.addPointIndex[0]) obj.x = epBrowser.addPointIndex[0];
 	    if(epBrowser.addPointIndex[1]) obj.y = epBrowser.addPointIndex[1];
+	    console.log(obj.x + " " + obj.y);
 	    if(json[i].o_sample["xml:lang"]) obj.lang = json[i].o_sample["xml:lang"];
 	    if(json[i].c){
 		obj.class = json[i].c.value;
