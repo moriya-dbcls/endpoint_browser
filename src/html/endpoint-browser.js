@@ -145,7 +145,8 @@ var epBrowser = epBrowser || {
 	param.cy = param.height / 2;
 	
 	epBrowser.endpoint = stanza_params["endpoint"];
-	epBrowser.graph = stanza_params["graphs"];
+	epBrowser.graph = false;
+	if(stanza_params["graphs"]) epBrowser.graph = stanza_params["graphs"];
 	
 	// make DOM
 	//// SVG DOM
