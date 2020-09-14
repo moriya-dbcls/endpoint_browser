@@ -2331,7 +2331,7 @@ var epBrowser = epBrowser || {
 		    if(json[0].c_label){
 			elm.class_label = json[0].c_label.value;
 			elm.class_label_type = json[0].c_label.type;
-			elm.sparql_suggest_var_name = "?" + elm.class_label.replace(/ /, "_").toLowerCase();
+			elm.sparql_suggest_var_name = "?" + elm.class_label.replace(/ /g, "_").toLowerCase();
 			if(elm.type == "bnode") elm.sparql_suggest_var_name += "_bnode";
 		    }
 		    if(elm.sparql_var_name) hub_var_name = elm.sparql_var_name.replace(/^\?/, "");
