@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.3.4
+// version: 0.3.5
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.3.4",
+    version: "0.3.5",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -1589,9 +1589,21 @@ var epBrowser = epBrowser || {
 	    query += "PREFIX " + keys[i] + ": <" + epBrowser.prefix[keys[i]] + ">\n";
 	    html += "PREFIX <span class='sparql_prefix'>" + keys[i] + ":</span> <span class='sparql_uri'>&lt;" + epBrowser.prefix[keys[i]] + "&gt;</span>\n";
 	}
+	//// graph
+	let graph_query = "";
+	let graph_html = "";
+	if(epBrowser.graph && epBrowser.graph.match(/^\s*https*:\/\//)){
+	    for(let graph of epBrowser.graph.replace(/\s/g, "").split(/,/)){
+		if(graph.match(/^https*:\/\//)){
+		    graph_query += "FROM <" + graph + ">\n";
+		    graph_html += "FROM <span class='sparql_uri'>&lt;" + graph + "&gt;</span>\n";
+		}
+	    }
+	}
 	//// raw query
 	// query += "PREFIX : <" + epBrowser.prefix[":"] + ">\n";  // RDF-config not allow the prefix ':'
 	query += "SELECT DISTINCT " + Object.keys(vars).join(" ") + "\n";
+	query += graph_query;
 	query += "WHERE {\n";
 	query += mkQuery(triples, blanks, 0)[0];
 	for(endpoint in service){
@@ -1603,6 +1615,7 @@ var epBrowser = epBrowser || {
 	//// html format query
 	// html += "PREFIX <span class='sparql_prefix'>:</span> <span class='sparql_uri'>&lt;" + epBrowser.prefix[":"] + "&gt;</span>\n";  // RDF-config not allow the prefix ':'
 	html += "SELECT DISTINCT <span style='color:#1680c4'>" + Object.keys(vars).join(" ") + "</span>\n";
+	html += graph_html;
 	html += "WHERE {\n"
 	html += mkQuery(triples, blanks, 0)[1];
 	for(endpoint in service){
