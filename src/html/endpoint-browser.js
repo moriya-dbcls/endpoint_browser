@@ -400,7 +400,7 @@ var epBrowser = epBrowser || {
 	let edge_label_g = edges_label_layer.selectAll(".edge_label_g");
 	let node_g = nodes_layer.selectAll(".node_g");
 
-	console.log(data);
+//	console.log(data);
 	
 	svg.select("#popup_mouse_event_label").attr("display", "none");
 	
