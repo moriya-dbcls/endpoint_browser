@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.3.5
+// version: 0.3.6
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.3.5",
+    version: "0.3.6",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -25,6 +25,7 @@ var epBrowser = epBrowser || {
     edgeZoomRate: 1,
     rdfConfSelectIndex: 0,
     prefixCc404: [],
+    blankId: 0,
 
     fetchReq: function(method, url, renderDiv, param, callback){
 	//console.log(url);
@@ -399,7 +400,7 @@ var epBrowser = epBrowser || {
 	let edge_label_g = edges_label_layer.selectAll(".edge_label_g");
 	let node_g = nodes_layer.selectAll(".node_g");
 
-//	console.log(data);
+	console.log(data);
 	
 	svg.select("#popup_mouse_event_label").attr("display", "none");
 	
@@ -677,6 +678,7 @@ var epBrowser = epBrowser || {
 			d3.select(this).on("click", null)
 			    .on("mouseover", null)
 			    .on("mouseout", null);
+		//	console.log(param.apiArg.join("  "));
 			epBrowser.fetchReq("post", url, renderDiv, param, epBrowser.updateGraph);
 		    }
 		}
@@ -816,24 +818,21 @@ var epBrowser = epBrowser || {
 					param.apiArg[i] += "&bnode=1&b_p=" + encodeURIComponent(JSON.stringify(link));
 					if(parent_node.class) param.apiArg[i] += "&b_t=" + encodeURIComponent(parent_node.class);
 				    }
+				    if(ad_param.targetPredicate){
+					param.apiArg[i] += '&target_predicate=' + encodeURIComponent(ad_param.targetPredicate);
+				    }
+				    if(ad_param.targetClass){
+					param.apiArg[i] += '&target_class=' + encodeURIComponent(ad_param.targetClass);
+				    }
 				    // }else if(param.apiArg[i].match(/^inv=/)){
 				    //	param.apiArg.splice(i, 1)
 				}else if(param.apiArg[i].match(/^endpoint=/)){
 				    if(parent_node.endpoint) param.apiArg[i] = 'endpoint=' + encodeURIComponent(parent_node.endpoint);
 				    else param.apiArg[i] = 'endpoint=' + encodeURIComponent(epBrowser.endpoint);
-				}else if(param.apiArg[i].match(/^target_predicate=/)){
-				    param.apiArg[i] = 'target_predicate=' + encodeURIComponent(ad_param.targetPredicate);
-				    f = 1;
-				}else if(param.apiArg[i].match(/^target_class=/)){
-				    param.apiArg[i] = 'target_class=' + encodeURIComponent(ad_param.targetClass);
 				}
 			    }
-			    if(!f){
-				param.apiArg.push('target_predicate=' + encodeURIComponent(ad_param.targetPredicate));
-				param.apiArg.push('target_class=' + encodeURIComponent(ad_param.targetClass));
-			    }
 			    let uri = epBrowser.api + epBrowser.findSameTypeNodes;
-			    console.log(param.apiArg.join("  "));
+			   // console.log(param.apiArg.join("  "));
 			    epBrowser.fetchReq("post", uri, renderDiv, param, epBrowser.showSameTypeNodes);
 			}
 		    });
@@ -1011,15 +1010,17 @@ var epBrowser = epBrowser || {
 		    }else if(node.type.match("literal")){
 			let literal = node.key;
 			if(node.type == "literal" || node.datatype.match(/#string$/)) literal = '"' + literal + '"';
-			config += indent + "  - " + object + ": " + literal + "\n";
+			config += indent + "  - " + object + ": <span class='rdf_conf_literal' alt='" + node.id + "_" + i + "'>" + literal + "</span>\n";
 		    }else if(node.type == "bnode"){
 			config += indent + "  - []:\n";
 			config += getRdfConfClass(node, indent + "  ");
 			let object_name = object.replace(/\<\/*span *[^\>]*\>/g, "").toLowerCase();
 			if(object_name.match(/^node_\d+$/) || object_name == pre_object_name) object_name = undefined;
 			let tmp = getRdfConfLeafObject(node.id, nest + 1, object_name, false);
-			if(tmp) config += tmp;
-			else config += indent + "    - " + object + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand blank node}}</span>\n";
+			if(tmp){
+			    if(!node.off_click[epBrowser.endpoint]) tmp = tmp.replace(/\n$/, " <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand blank node}}</span>\n");
+			    config += tmp;
+			}else config += indent + "    - " + object + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand blank node}}</span>\n";
 		    }
 		}
 	    }
@@ -1259,11 +1260,18 @@ var epBrowser = epBrowser || {
 	    }).on("keydown", function(){
 		if(d3.event.key === 'Enter') setNewSubject(this);
 	    }).on("contextmenu", function(){
-		console.log(d3.select(this).attr("alt"));
 		let tmp = d3.select(this).attr("alt").split("_");
 		epBrowser.setPopupPosition(renderDiv, renderDiv.select("#var_name_form"), this);
 		renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + tmp[0]).on("contextmenu")(data.nodes[tmp[1]]);
 	    });
+	////// literal right click
+	renderDiv.selectAll(".rdf_conf_literal").attr("tabindex", "0")
+	    .style("cursor", "pointer")
+	    .on("contextmenu", function(){
+		let tmp = d3.select(this).attr("alt").split("_");
+		epBrowser.setPopupPosition(renderDiv, renderDiv.select("#var_name_form"), this);
+		renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + tmp[0]).on("contextmenu")(data.nodes[tmp[1]]);
+	    });	
 	renderDiv.selectAll(".rdf_conf_custom_prefix").style("color", "#1680c4");
 	renderDiv.selectAll(".rdf_conf_custom_node_name").style("color", "#1680c4");
 	renderDiv.selectAll(".rdf_conf_suggest_node_name").style("color", "#d368d9");
@@ -1355,8 +1363,11 @@ var epBrowser = epBrowser || {
 	for(let i = 0; i < nodes.length; i++){
 	    if(nodes[i].id == id){
 		let subject = nodes[i].subject;
-		link.unshift(nodes[i].predicate);
-		if(nodes[i].subject_type != "bnode") return [subject, link];
+		if(nodes[i].filter_predicate && nodes[i].filter_object){
+		    subject = nodes[i].filter_object;
+		    link.unshift("inv-" + nodes[i].filter_predicate);
+		}else link.unshift(nodes[i].predicate);
+		if(nodes[i].subject_type != "bnode" || (nodes[i].filter_predicate && nodes[i].filter_object)) return [subject, link];
 		else return epBrowser.getBlankNodeLink(nodes[i].subject_id, link);
 		break;
 	    }
@@ -2141,6 +2152,12 @@ var epBrowser = epBrowser || {
 	let popup = renderDiv.select("#var_name_form").html("").style("display", "block");
 	let popdiv = popup.append("div").attr("class", "nodemenu");
 	let ul = popdiv.append("ul").attr("class", "nodemenu");
+	ul.append("li").attr("class", "nodemenu").text("expand all nodes")
+	    .on("click", function(){
+		epBrowser.addGraphDataFromList(api_json, renderDiv, param);
+		epBrowser.forcegraph(renderDiv, param);
+		epBrowser.hidePopupInputDiv(renderDiv);
+	    });
 	for(let uri of api_json.data){
 	    ul.append("li").attr("class", "nodemenu").text(epBrowser.uriToShort(uri, false, false, renderDiv, param))
 		.attr("alt", uri)
@@ -2395,7 +2412,6 @@ var epBrowser = epBrowser || {
 	    if(inverse) obj.predicate = "inv-" + obj.predicate;
 	    if(epBrowser.addPointIndex[0]) obj.x = epBrowser.addPointIndex[0];
 	    if(epBrowser.addPointIndex[1]) obj.y = epBrowser.addPointIndex[1];
-	    console.log(obj.x + " " + obj.y);
 	    if(json[i].o_sample["xml:lang"]) obj.lang = json[i].o_sample["xml:lang"];
 	    if(json[i].c){
 		obj.class = json[i].c.value;
@@ -2487,6 +2503,111 @@ var epBrowser = epBrowser || {
 //	console.log(epBrowser.nodeGridPos);
     },
 
+    addGraphDataFromList: function(api_json, renderDiv, param){
+//	console.log(api_json);
+	let json = api_json.data;
+
+	if(!json[0]) return 0;
+	   
+	let inverse = false;
+	if(api_json.inv == 1) inverse = true;
+	let data = epBrowser.graphData;
+	let nodeKey2id = epBrowser.nodeKey2id;
+	let parent = Array.from(epBrowser.selectParent);
+	let edgeList = epBrowser.edgeList;
+	let edgeST2id = epBrowser.edgeST2id;
+	let nodeId = data.nodes[data.nodes.length - 1].id + 1;
+	let edgeId = data.edges[data.edges.length - 1].id + 1;
+
+	let copy_node_list = [];
+	let copy_edge_list = [];
+	let select_node_key = false;
+	let copy_parent = [];
+
+	let copyDataObject = function(id){
+	    let parent_id;
+	    for(let node of data.nodes){
+		if(node.id == id){
+		    node.sample_count = 1;
+		    if(!select_node_key){
+			select_node_key = node.key;
+			copy_parent = Array.from(node.parent);
+		    }else{
+			copy_parent = copy_parent.filter(n => n != node.id); // delete array element
+		    }
+		    //copy_node_list.push( {...node} ); // copy object
+		    copy_node_list.push( JSON.parse(JSON.stringify(node)) ); // deep copy object
+		    parent_id = node.subject_id;
+		    for(let edge of data.edges){
+			if(edge.source.id == parent_id && edge.target.id == id){
+			    edge.count = 1;
+			    //copy_edge_list.push( {...edge} );  // copy object
+			    copy_edge_list.push( JSON.parse(JSON.stringify(edge)) ); // deep copy object
+			    break;
+			}
+		    }
+		    for(let parent_node of data.nodes){
+			if(parent_id == parent_node.id){
+			    if(parent_node.type == "bnode"){
+				copyDataObject(parent_node.id);
+			    }
+			    break;
+			}
+		    }
+		    break;
+		}
+	    }
+	}
+
+	copyDataObject(epBrowser.selectNode);
+
+	for(let node_key of json){
+	    if(select_node_key == node_key) continue;
+	    let pre_object;
+	    let pre_predicate;
+	    for(let i = 0; i < copy_node_list.length; i++){
+		// node
+		//let node =  {...copy_node_list[i]};  // copy object
+		let node = JSON.parse(JSON.stringify(copy_node_list[i])); // deep copy object
+		if(i == 0) node.key = node_key;
+		else{
+		    node.key = "epBrowser_bnodeID://" + epBrowser.blankId;
+		    node.filter_predicate = pre_predicate;
+		    node.filter_object = pre_object;
+		    epBrowser.blankId++;
+		}
+		node.id = nodeId;
+		node.off_click = {};
+		node.predicate_id = edgeId;
+		node.parent = Array.from(copy_parent);
+		for(let j = i + 1; j < copy_node_list.length; j++){
+		    node.parent.push(nodeId + j);
+		    node.subject_id = nodeId + 1;
+		}
+		// edge
+		//let edge =  {...copy_edge_list[i]};  // copy object
+	    	let edge = JSON.parse(JSON.stringify(copy_edge_list[i])); // deep copy object
+		edge.target = nodeId;
+		if(copy_edge_list.length != i + 1) edge.source = nodeId + 1;
+		else edge.source = edge.source.id;
+		edge.id = edgeId;
+		edge.edge_key = edge.source + "_" + edge.target + "_" + edge.predicate;
+		edge.parent = Array.from(node.parent);
+		// push
+		data.nodes.push(node);
+		nodeKey2id[node.key] = nodeId;
+		nodeId++;
+		data.edges.push(edge);
+		edgeST2id[edge.source + "_" + edge.target] = edgeId;
+		edgeId++;
+		pre_object = node.key;
+		pre_predicate = edge.predicate;
+	    }
+	}
+//	console.log(data.nodes);
+//	console.log(data.edges);
+    },
+    
     addEndpointToUri: function(json, notUse, param){
 	let tmp = param.apiArg[0].split(/=/);
 	json.unshift({id: "-- select endpoint"});
