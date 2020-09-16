@@ -48,10 +48,12 @@
       margin-top: 0px;
       height: 20px;
       }
-      h1 {
+      h1, a.title {
+      color: #ffffff;
       font-size: 24px;
       margin: 0px;
       padding: 40px 20px 0px 20px;
+      text-decoration: none;
       }
       h2 {
       font-size: 20px;
@@ -138,7 +140,7 @@
   <body>
     <div id="head">
      <a href="./sparql-support.html" id="logolink"><img src="https://sparql-support.dbcls.jp/file/endpoint-browser_logo.png" height="70" id="logo"></a> 
-     <h1>Endpoint browser <span style="color:#ffcccc">local</dev></h1>
+     <h1><a href="" onclick="location.reload();return false" class="title">Endpoint browser</a> <span style="color:#ffcccc">local</dev></h1>
     </div>
     <div id="main">
 
