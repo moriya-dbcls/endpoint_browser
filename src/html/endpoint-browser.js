@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.3.6
+// version: 0.3.8
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.3.6",
+    version: "0.3.8",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -215,16 +215,16 @@ var epBrowser = epBrowser || {
 	sel.on("change", function(){
 	    let value = this.value;
 	    if(value == "download" || value == "rdf-conf-chk"){
-		let endpoint_yaml = "endpoint: " + epBrowser.endpoint;
+		let endpoint_yaml = "endpoint:\n  - " + epBrowser.endpoint;
 		if(epBrowser.graph && epBrowser.graph.match(/^\s*https*:\/\//)){
-		    endpoint_yaml += "\n\ngraph:\n";
+		    endpoint_yaml += "\n  - graph:\n";
 		    for(let graph of epBrowser.graph.replace(/\s/g, "").split(/,/)){
-			if(graph.match(/^https*:\/\//)) endpoint_yaml += "  - " + graph + "\n";
+			if(graph.match(/^https*:\/\//)) endpoint_yaml += "    - " + graph + "\n";
 		    }
 		}
 		rdfConfig.select("#rdf_conf_form_endpoint").attr("value", endpoint_yaml);
 		rdfConfig.select("#rdf_conf_form_prefix").attr("value", rdfConfig.select("#rdf_config_prefix").html().replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">"));
-		rdfConfig.select("#rdf_conf_form_model").attr("value", rdfConfig.select("#rdf_config_model").html().replace(/> cardinality </g, "><").replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">").replace(/ +\{\{expand subject\}\}/, ""));
+		rdfConfig.select("#rdf_conf_form_model").attr("value", rdfConfig.select("#rdf_config_model").html().replace(/> cardinality </g, "><").replace(/\<\/*span *[^\>]*\>/g, "").replace(/\&lt;/g, "<").replace(/\&gt;/g, ">").replace(/ +\{\{expand subject\}\}/g, "").replace(/ *- a: \{\{undefined\}\}\n/g,""));
 		rdfConfig.select("#rdf_conf_form_sparql").attr("value", rdfConfig.select("#rdf_config_sparql").html());
 		if(value == "rdf-conf-chk") rdfConfig.select("#download_form").attr("action", "https://sparql-support.dbcls.jp/file/dl/rdf-conf-chk.php").attr("target", "check_model");
 		else  rdfConfig.select("#download_form").attr("action", "https://sparql-support.dbcls.jp/file/dl/download.php").attr("target", "");
@@ -888,7 +888,9 @@ var epBrowser = epBrowser || {
 	});
 	for(let i = 0; i < keys.length; i++){ // custom prefix
 	    if(epBrowser.prefixTemp[keys[i]]){
-		rdfConfPrefix.push(epBrowser.uriToShort(epBrowser.prefixTemp[keys[i]], false, 1, renderDiv, param) + " &lt;" + epBrowser.prefixTemp[keys[i]] + "&gt;");
+		let uri =  "<span class='rdf_conf_prefix rdf_conf_custom_prefix' alt='" + epBrowser.prefixTemp[keys[i]] + "'>" + keys[i] + "</span>:";
+		if(keys[i].match(/^p\d+$/)) uri = "<span class='rdf_conf_prefix' alt='" + epBrowser.prefixTemp[keys[i]] + "'>" + keys[i] + "</span>:";
+		rdfConfPrefix.push( uri + " &lt;" + epBrowser.prefixTemp[keys[i]] + "&gt;");
 	    }
 	}
 	for(let i = 0; i < keys.length; i++){ // fixed prefix
