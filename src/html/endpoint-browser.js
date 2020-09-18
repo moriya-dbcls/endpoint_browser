@@ -16,6 +16,7 @@ var epBrowser = epBrowser || {
     debug: false,
     clickableFlag: true,
     labelFlag: true,
+    labelModeFlag: 0,
     forceFlag: true,
     inverseFlag: false,
     subgraphMode: false,
@@ -480,7 +481,10 @@ var epBrowser = epBrowser || {
 	let edge_label_bg = edge_label_g.append("rect")
 	    .attr("class", "edge_label_bg");
 	let edge_label = edge_label_g.append("text")
-	    .text(function(d) { return d.predicate_label; })
+	    .text(function(d) {
+		if(epBrowser.labelModeFlag == 1) return d.predicate_label;
+		else return d.predicate_text;
+	    })
 	    .attr("id", function(d){ return "edge_label_" + d.id;} )
 	    .attr("class", "edge_label")
 	    .attr("text-anchor", function(){
@@ -1948,6 +1952,7 @@ var epBrowser = epBrowser || {
 	    changeSwitchColor(g, flag);
 	    if(flag){
 		epBrowser.labelFlag = false;
+		epBrowser.labelModeFlag = (epBrowser.labelModeFlag + 1) % 2;
 		svg.selectAll(".edge_label").attr("display", "block");
 		svg.selectAll(".edge_label_bd").attr("display", "block");
 		reDrawGraph();
@@ -2315,7 +2320,7 @@ var epBrowser = epBrowser || {
     },
     
     addGraphData: function(api_json, renderDiv, param){
-	// console.log(api_json);
+//	 console.log(api_json);
 	let json = api_json.data;
 
 	if(!json[0]) return 0;
@@ -2458,6 +2463,10 @@ var epBrowser = epBrowser || {
 		    for(elm of data.edges){
 			if(elm.target == nodeKey2id[obj.key]){
 			    elm.predicate_label += ", " + add_predicate;
+			    if(json[i].p_label && json[i].p_label.value){
+				if(elm.predicate_label_text) elm.predicate_text += ", '" + json[i].p_label.value + "'";
+				else elm.predicate_text += ", " + add_predicate;
+			    }
 			    flag = 0;
 			    // add graph skip flag
 			    obj.skip = 1;
@@ -2489,7 +2498,10 @@ var epBrowser = epBrowser || {
 	    }else{
 		nodeKey2id[obj.key] = nodeId;
 		data.nodes.push(obj);
-		data.edges.push({id: edgeId, source: source, target: target, predicate: json[i].p.value, predicate_label: epBrowser.uriToShort(json[i].p.value, false, false, renderDiv, param), count: json[i].o_count.value, parent: parent, edge_key: edge_key});
+		let short_predicate = epBrowser.uriToShort(json[i].p.value, false, false, renderDiv, param);
+		let predicate_text = short_predicate;
+		if(json[i].p_label && json[i].p_label.value) predicate_text = "'" + json[i].p_label.value + "'";
+		data.edges.push({id: edgeId, source: source, target: target, predicate: json[i].p.value, predicate_label: short_predicate, count: json[i].o_count.value, parent: parent, edge_key: edge_key, predicate_text: predicate_text});
 		edgeList[edge_key] = 1;
 		edgeST2id[source + "_" + target] = edgeId;
 		nodeId++;
