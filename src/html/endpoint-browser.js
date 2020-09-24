@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.3.8
+// version: 0.3.9
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.3.8",
+    version: "0.3.9",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -970,7 +970,7 @@ var epBrowser = epBrowser || {
 	    for(let i = 0; i < data.nodes.length; i++){
 		let node = data.nodes[i];
 		if(node.subject_id == id){
-		    if(node.predicate == epBrowser.rdfType) continue;
+		    if(node.predicate == epBrowser.rdfType || node.predicate.match(/^inv-http/)) continue;
 		    let object = getRdfConfVarName(node, pre_object_name, subject);
 		    let cardinality = "";
 		    let cardinality_f = 0;
@@ -2742,6 +2742,7 @@ var epBrowser = epBrowser || {
     uriToShort: function(uri, sparql, config, renderDiv, param){
 	let f = 0;
 	let prefix = "";
+	if(uri.match(/^inv-http/)) uri.replace(/^inv-http/, "http");
 	if(!uri.match(/(.+[\/#:])([^\/#:]*)$/)){ // uri check 
 	    console.log("URI syntax error: '" + uri + "'");
 	    return "<span style='color:red;font-weight:bold;'>URIsyntax error: '" + uri + "'</span>";
