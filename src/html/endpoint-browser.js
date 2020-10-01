@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.3.9
+// version: 0.3.10
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.3.9",
+    version: "0.3.10",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -759,21 +759,44 @@ var epBrowser = epBrowser || {
 		d3.event.preventDefault();
 		let popup = renderDiv.select("#var_name_form").html("").style("display", "block");
 		let modeFlag = false;
+		let notBlankFlag = true;
 		if(this.attributes){
 		    modeFlag = true;
 		    epBrowser.setPopupPosition(renderDiv, popup, this);
+		}
+		if(d.type == "bnode"){
+		    notBlankFlag = false;
 		}
 		let popdiv = popup.append("div").attr("class", "nodemenu");
 		let ul = popdiv.append("ul").attr("class", "nodemenu");
 		let ad_param = epBrowser.sameTypeNodesParam = {};
 		ad_param.id = d.id;
+		ad_param.key = d.key;
 		ad_param.parentId = d.subject_id;
 		ad_param.targetPredicate = d.predicate;
 		ad_param.targetClass = "";
 		if(d.class) ad_param.targetClass = d.class;
+		// copy to clipboard
+		ul.append("li").attr("class",  function(){
+		    if(notBlankFlag) return "nodemenu";
+		    else return "nodemenu_off";
+		}).text("copy to clipboard")
+		    .filter(function(){ return notBlankFlag; })
+		    .on("click", function(){
+			let temp = document.createElement('div');
+			temp.appendChild(document.createElement('pre')).textContent = ad_param.key;
+			let s = temp.style;
+			s.position = 'fixed';
+			s.left = '-100%';
+			document.body.appendChild(temp);
+			document.getSelection().selectAllChildren(temp);
+			let result = document.execCommand('copy');
+			document.body.removeChild(temp);
+			epBrowser.hidePopupInputDiv(renderDiv);
+		    });
 /*	   // inverse link     
 		ul.append("li").attr("class", function(){
-		    if( modeFlag) return "nodemenu";
+		    if(modeFlag) return "nodemenu";
 		    else return "nodemenu_off";
 		}).text("search inverse link")
 		    .filter(function(){ return modeFlag; })
@@ -789,6 +812,7 @@ var epBrowser = epBrowser || {
 			}
 		    });
 */
+		// expand same class node
 		let bnode_sample_count = 0;
 		for(let node of data.nodes){
 		    if(node.id == d.subject_id){
