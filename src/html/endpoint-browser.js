@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.3.10
+// version: 0.3.11
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.3.10",
+    version: "0.3.11",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -487,8 +487,8 @@ var epBrowser = epBrowser || {
 	    })
 	    .attr("id", function(d){ return "edge_label_" + d.id;} )
 	    .attr("class", "edge_label")
-	    .attr("text-anchor", function(){
-		if(epBrowser.nodeGridFlag) return "end";
+	    .attr("text-anchor", function(d){
+		if(epBrowser.nodeGridFlag && !d.from_inverse) return "end";
 		else return "start";
 	    })
 	    .attr("display", function(){
@@ -1362,10 +1362,10 @@ var epBrowser = epBrowser || {
 		return epBrowser.calcPath(d.source.x, d.source.y, d.target.x, d.target.y, d.has_reverse);
 	    });
 	    // edge label
-	    edge_label.attr("dx", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "x", d.has_reverse); })
-		.attr("dy", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "y", d.has_reverse); });
-	    edge_label_bg.attr("x", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "x", d.has_reverse); })
-		.attr("y", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "y", d.has_reverse); });
+	    edge_label.attr("dx", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "x", d.has_reverse, d.from_inverse); })
+		.attr("dy", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "y", d.has_reverse, d.from_inverse); });
+	    edge_label_bg.attr("x", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "x", d.has_reverse, d.from_inverse); })
+		.attr("y", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "y", d.has_reverse, d.from_inverse); });
 	    // node
 	    node_g.attr("transform", function(d) {
 		if(epBrowser.nodeGridFlag) d.x = d.layer * 360 + epBrowser.entryNodeIndex.x;
@@ -2305,13 +2305,13 @@ var epBrowser = epBrowser || {
 	}
     },
 
-    calcEdgeLabelPos: function(x1, y1, x2, y2, label, reverse){
+    calcEdgeLabelPos: function(x1, y1, x2, y2, label, has_reverse, from_inverse){
 	if(!epBrowser.nodeGridFlag){
 	    if(label == "x"){
-		if(x1 > x2 || reverse) return (x1 + x2 * 2) / 3 + 6; // left direction edge
+		if(x1 > x2 || has_reverse) return (x1 + x2 * 2) / 3 + 6; // left direction edge
 		else return (x1 * 2 + x2) / 3 + 6;        // right direction edge
 	    }else{
-		if(x1 > x2 || reverse) return (y1 + y2 * 2) / 3;     // left direction edge
+		if(x1 > x2 || has_reverse) return (y1 + y2 * 2) / 3;     // left direction edge
 		else return (y1 * 2 + y2) / 3;            // right direction edge
 	    }
 	}else{
@@ -2326,10 +2326,17 @@ var epBrowser = epBrowser || {
 		if(x2 > x1){ // normal
 		    x1 += x_margin;
 		    x2 -= x_margin;
-		  /*  if(label == "x") return (x1 + x2 * 9) / 10; // for straight line
+		     // for straight line
+		  /*  if(label == "x") return (x1 + x2 * 9) / 10;
 		      else return (y1 + y2 * 9) / 10;  */
-		    if(label == "x") return x2 - 10; // for Bezier curve
-		    else return y2 - 6;
+		    // for Bezier curve
+		    if(from_inverse){
+			if(label == "x") return x1 + 10;
+			else return y1 - 6;
+		    }else{
+			if(label == "x") return x2 - 10;
+			else return y2 - 6;
+		    }
 		}else{
 		    if(y1 < y2){ // reverse lower
 			if(label == "x") return x1;
@@ -2525,7 +2532,9 @@ var epBrowser = epBrowser || {
 		let short_predicate = epBrowser.uriToShort(json[i].p.value, false, false, renderDiv, param);
 		let predicate_text = short_predicate;
 		if(json[i].p_label && json[i].p_label.value) predicate_text = "'" + json[i].p_label.value + "'";
-		data.edges.push({id: edgeId, source: source, target: target, predicate: json[i].p.value, predicate_label: short_predicate, count: json[i].o_count.value, parent: parent, edge_key: edge_key, predicate_text: predicate_text});
+		edge_obj = {id: edgeId, source: source, target: target, predicate: json[i].p.value, predicate_label: short_predicate, count: json[i].o_count.value, parent: parent, edge_key: edge_key, predicate_text: predicate_text};
+		if(inverse) edge_obj.from_inverse = true;
+		data.edges.push(edge_obj);
 		edgeList[edge_key] = 1;
 		edgeST2id[source + "_" + target] = edgeId;
 		nodeId++;
