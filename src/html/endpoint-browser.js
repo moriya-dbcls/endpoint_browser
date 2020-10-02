@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.3.11
+// version: 0.3.12
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.3.11",
+    version: "0.3.12",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -1072,13 +1072,13 @@ var epBrowser = epBrowser || {
 		else sparql_subject.push(tmp[2]);
 		let snake_subject = tmp[2];
 		subject = tmp[1] + snakeToCamel(tmp[2]) + tmp[3];
-		if(node.class || id == 0){
+	//	if(node.class || id == 0){
 		    ids.push(id);
 		    rdfConf[id] = "- " + subject;
 		    if(node.off_click[epBrowser.endpoint]) rdfConf[id] += " " + epBrowser.uriToShort(node.key, false, 1, renderDiv, param) + ":\n";
 		    else rdfConf[id] += " " + epBrowser.uriToShort(node.key, false, 1, renderDiv, param) + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand subject}}</span>\n";
 		    rdfConf[id] += getRdfConfClass(node, "");
-		}
+	//	}
 		let leaf = getRdfConfLeafObject(id, 0, false, snake_subject);
 		if(leaf) rdfConf[id] += leaf;
 	    }
