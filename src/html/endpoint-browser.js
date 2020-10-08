@@ -1798,7 +1798,7 @@ var epBrowser = epBrowser || {
 	
 	makeBrowseOpt(80, "inverse link", optInverse);
 	makeBrowseOpt(240, "federated search", optFederated);
-	
+
 	makeSwitch(80, "property", propertySwitch);
 	makeSwitch(220, "RDF-config", prefixListSwitch);
 	makeSwitch(376, "layer arrangement", gridGraphSwitch);
@@ -2026,6 +2026,7 @@ var epBrowser = epBrowser || {
 	    }
 	}
 
+	epBrowser.entryNodeIndex = {};
 	function gridGraphSwitch(g, flag){
 	    changeSwitchColor(g, flag);
 	    chageGraphTypeFlag = true;
@@ -2189,6 +2190,7 @@ var epBrowser = epBrowser || {
 		    .on("click", function(){
 			localStorage.setItem("states_save",  "1");
 			localStorage.setItem("states_0", JSON.stringify(epBrowser.graphData));
+			localStorage.setItem("grid_0", JSON.stringify({flag: epBrowser.nodeGridFlag, index: epBrowser.entryNodeIndex}));
 			localStorage.setItem("endpoint_0", epBrowser.endpoint);
 			localStorage.setItem("param_0", JSON.stringify(param));
 			epBrowser.hidePopupInputDiv(renderDiv);
@@ -2200,6 +2202,12 @@ var epBrowser = epBrowser || {
 		    .filter(function(){ return localStorage.getItem("states_save") == "1" })
 		    .on("click", function(){
 			epBrowser.graphData = JSON.parse(localStorage.getItem("states_0"));
+			epBrowser.nodeGridFlag = false;
+			if(JSON.parse(localStorage.getItem("grid_0")).flag == true){
+			    epBrowser.nodeGridFlag = JSON.parse(localStorage.getItem("grid_0")).flag;
+			    epBrowser.entryNodeIndex = JSON.parse(localStorage.getItem("grid_0")).index;
+			    gridGraphSwitch(ctrl.select("#layer_arrangement_switch_g"), true);
+			}
 			epBrowser.endpoint = localStorage.getItem("endpoint_0");
 			param = JSON.parse(localStorage.getItem("param_0"));
 			epBrowser.hidePopupInputDiv(renderDiv);
