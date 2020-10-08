@@ -757,6 +757,7 @@ var epBrowser = epBrowser || {
 	    .on("contextmenu", function(d){
 		if(epBrowser.subgraphMode || epBrowser.removeMode) return 0;
 		d3.event.preventDefault();
+		epBrowser.hidePopupInputDiv(renderDiv);
 		let popup = renderDiv.select("#var_name_form").style("display", "block");
 		let modeFlag = false;
 		let notBlankFlag = true;
@@ -767,8 +768,8 @@ var epBrowser = epBrowser || {
 		if(d.type == "bnode"){
 		    notBlankFlag = false;
 		}
-		let popdiv = popup.append("div").attr("class", "nodemenu");
-		let ul = popdiv.append("ul").attr("class", "nodemenu").attr("id", "menu_ul");
+		let popdiv = popup.append("div").attr("class", "nodemenu").attr("id", "menu_ul");
+		let ul = popdiv.append("ul").attr("class", "nodemenu");
 		let ad_param = epBrowser.sameTypeNodesParam = {};
 		ad_param.id = d.id;
 		ad_param.key = d.key;
@@ -2182,6 +2183,7 @@ var epBrowser = epBrowser || {
 	let g = box.append("g").attr("id", "states_g").attr("class", "states_button").style("cursor", "pointer")
 	    .on("click", function(){
 		d3.event.preventDefault();
+		epBrowser.hidePopupInputDiv(renderDiv);
 		let popup = renderDiv.select("#var_name_form").style("display", "block");
 		epBrowser.setPopupPosition(renderDiv, popup, this);
 		let popdiv = popup.append("div").attr("class", "nodemenu").attr("id", "menu_ul");
