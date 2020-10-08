@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.4.0
+// version: 0.4.1
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.4.0",
+    version: "0.4.1",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -757,7 +757,7 @@ var epBrowser = epBrowser || {
 	    .on("contextmenu", function(d){
 		if(epBrowser.subgraphMode || epBrowser.removeMode) return 0;
 		d3.event.preventDefault();
-		let popup = renderDiv.select("#var_name_form").html("").style("display", "block");
+		let popup = renderDiv.select("#var_name_form").style("display", "block");
 		let modeFlag = false;
 		let notBlankFlag = true;
 		if(this.attributes){
@@ -768,7 +768,7 @@ var epBrowser = epBrowser || {
 		    notBlankFlag = false;
 		}
 		let popdiv = popup.append("div").attr("class", "nodemenu");
-		let ul = popdiv.append("ul").attr("class", "nodemenu");
+		let ul = popdiv.append("ul").attr("class", "nodemenu").attr("id", "menu_ul");
 		let ad_param = epBrowser.sameTypeNodesParam = {};
 		ad_param.id = d.id;
 		ad_param.key = d.key;
@@ -2182,9 +2182,9 @@ var epBrowser = epBrowser || {
 	let g = box.append("g").attr("id", "states_g").attr("class", "states_button").style("cursor", "pointer")
 	    .on("click", function(){
 		d3.event.preventDefault();
-		let popup = renderDiv.select("#var_name_form").html("").style("display", "block");
+		let popup = renderDiv.select("#var_name_form").style("display", "block");
 		epBrowser.setPopupPosition(renderDiv, popup, this);
-		let popdiv = popup.append("div").attr("class", "nodemenu");
+		let popdiv = popup.append("div").attr("class", "nodemenu").attr("id", "menu_ul");
 		let ul = popdiv.append("ul").attr("class", "nodemenu");
 		ul.append("li").attr("class", "nodemenu").text("save states")
 		    .on("click", function(){
@@ -2254,7 +2254,7 @@ var epBrowser = epBrowser || {
     
     hidePopupInputDiv: function(renderDiv){
 	let div = renderDiv.select("#var_name_form").style("display", "none");
-	renderDiv.select("#var_name_form").html("");
+	div.select("#menu_ul").remove();
 	div.select("#var_name").remove();
 	renderDiv.select("#outer_endpoints").style("display", "none");
 	renderDiv.select("#rdf_conf_card_div").style("display", "none");
