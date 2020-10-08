@@ -2202,11 +2202,12 @@ var epBrowser = epBrowser || {
 		    .filter(function(){ return localStorage.getItem("states_save") == "1" })
 		    .on("click", function(){
 			epBrowser.graphData = JSON.parse(localStorage.getItem("states_0"));
-			epBrowser.nodeGridFlag = false;
 			if(JSON.parse(localStorage.getItem("grid_0")).flag == true){
-			    epBrowser.nodeGridFlag = JSON.parse(localStorage.getItem("grid_0")).flag;
+			    if(!epBrowser.nodeGridFlag) gridGraphSwitch(ctrl.select("#layer_arrangement_switch_g"), true);
+			    epBrowser.nodeGridFlag = true;
 			    epBrowser.entryNodeIndex = JSON.parse(localStorage.getItem("grid_0")).index;
-			    gridGraphSwitch(ctrl.select("#layer_arrangement_switch_g"), true);
+			}else{
+			    epBrowser.nodeGridFlag = false;
 			}
 			epBrowser.endpoint = localStorage.getItem("endpoint_0");
 			param = JSON.parse(localStorage.getItem("param_0"));
