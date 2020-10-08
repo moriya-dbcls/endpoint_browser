@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.3.12
+// version: 0.4.0
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.3.12",
+    version: "0.4.0",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -128,7 +128,7 @@ var epBrowser = epBrowser || {
     },
 
     initParam: function(stanza_params, renderDivId){
-	let param = [];
+	let param = {};
 	param.width = 0;
 	if(renderDivId.offsetWidth > 0 && param.width < 100) param.width = renderDivId.offsetWidth; 
 	if(param.width <= 300) param.width = 960;
@@ -2176,6 +2176,44 @@ var epBrowser = epBrowser || {
 		changeMode(g, text);
 	    }
 	});
+
+	// save/load states
+	let g = box.append("g").attr("id", "states_g").attr("class", "states_button").style("cursor", "pointer")
+	    .on("click", function(){
+		d3.event.preventDefault();
+		let popup = renderDiv.select("#var_name_form").html("").style("display", "block");
+		epBrowser.setPopupPosition(renderDiv, popup, this);
+		let popdiv = popup.append("div").attr("class", "nodemenu");
+		let ul = popdiv.append("ul").attr("class", "nodemenu");
+		ul.append("li").attr("class", "nodemenu").text("save states")
+		    .on("click", function(){
+			localStorage.setItem("states_save",  "1");
+			localStorage.setItem("states_0", JSON.stringify(epBrowser.graphData));
+			localStorage.setItem("endpoint_0", epBrowser.endpoint);
+			localStorage.setItem("param_0", JSON.stringify(param));
+			epBrowser.hidePopupInputDiv(renderDiv);
+		    });
+		ul.append("li").attr("class",  function(){
+		    if(localStorage.getItem("states_save") == "1") return "nodemenu";
+		    else return "nodemenu_off";
+		}).text("load states")
+		    .filter(function(){ return localStorage.getItem("states_save") == "1" })
+		    .on("click", function(){
+			epBrowser.graphData = JSON.parse(localStorage.getItem("states_0"));
+			epBrowser.endpoint = localStorage.getItem("endpoint_0");
+			param = JSON.parse(localStorage.getItem("param_0"));
+			epBrowser.hidePopupInputDiv(renderDiv);
+			// reset node-edge connection
+			epBrowser.graphData.edges.forEach(edge => {
+			    edge.source = edge.source.id;
+			    edge.target = edge.target.id;
+			    });
+			epBrowser.forcegraph(renderDiv, param);
+		    });
+	    });
+	g.append("rect").attr("x", 825).attr("y", 3).attr("width", 60).attr("height", "18").attr("fill", "none").attr("stroke", "#888888");
+	g.append("text").attr("x", 830).attr("y", 12).attr("fill", "#666666")
+	    .attr("dominant-baseline", "middle").style("font-size", "16px").text("states");
     },
 
     showSameTypeNodes: function(api_json, renderDiv, param){
@@ -2207,6 +2245,7 @@ var epBrowser = epBrowser || {
     
     hidePopupInputDiv: function(renderDiv){
 	let div = renderDiv.select("#var_name_form").style("display", "none");
+	renderDiv.select("#var_name_form").html("");
 	div.select("#var_name").remove();
 	renderDiv.select("#outer_endpoints").style("display", "none");
 	renderDiv.select("#rdf_conf_card_div").style("display", "none");
