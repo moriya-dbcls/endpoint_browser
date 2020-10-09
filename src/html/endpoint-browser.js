@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.4.1
+// version: 0.4.2
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.4.1",
+    version: "0.4.2",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -2179,8 +2179,18 @@ var epBrowser = epBrowser || {
 	    }
 	});
 
+	// change save data  remove later (2020/10/15)
+	if( localStorage.getItem("states_save") == "1" && localStorage.getItem("param_0")){
+	    let tmpData = JSON.parse(localStorage.getItem("states_0"));
+	    localStorage.setItem("states_0", JSON.stringify({endpoint: localStorage.getItem("endpoint_0"), graphData: JSON.parse(localStorage.getItem("states_0")), param:  JSON.parse(localStorage.getItem("param_0")), nodeGridFlag: JSON.parse(localStorage.getItem("grid_0")).flag, entryNodeIndex: JSON.parse(localStorage.getItem("grid_0")).index}));
+	    localStorage.removeItem("grid_0");
+	    localStorage.removeItem("endpoint_0");
+	    localStorage.removeItem("param_0");    
+	}
+	
 	// save/load states
-	let g = box.append("g").attr("id", "states_g").attr("class", "states_button").style("cursor", "pointer")
+	//// save
+	let save_g = box.append("g").attr("id", "save_states_g").attr("class", "states_button").style("cursor", "pointer")
 	    .on("click", function(){
 		d3.event.preventDefault();
 		epBrowser.hidePopupInputDiv(renderDiv);
@@ -2188,43 +2198,72 @@ var epBrowser = epBrowser || {
 		epBrowser.setPopupPosition(renderDiv, popup, this);
 		let popdiv = popup.append("div").attr("class", "nodemenu").attr("id", "menu_ul");
 		let ul = popdiv.append("ul").attr("class", "nodemenu");
-		ul.append("li").attr("class", "nodemenu").text("save states")
-		    .on("click", function(){
-			localStorage.setItem("states_save",  "1");
-			localStorage.setItem("states_0", JSON.stringify(epBrowser.graphData));
-			localStorage.setItem("grid_0", JSON.stringify({flag: epBrowser.nodeGridFlag, index: epBrowser.entryNodeIndex}));
-			localStorage.setItem("endpoint_0", epBrowser.endpoint);
-			localStorage.setItem("param_0", JSON.stringify(param));
-			epBrowser.hidePopupInputDiv(renderDiv);
-		    });
-		ul.append("li").attr("class",  function(){
-		    if(localStorage.getItem("states_save") == "1") return "nodemenu";
-		    else return "nodemenu_off";
-		}).text("load states")
-		    .filter(function(){ return localStorage.getItem("states_save") == "1" })
-		    .on("click", function(){
-			epBrowser.graphData = JSON.parse(localStorage.getItem("states_0"));
-			if(JSON.parse(localStorage.getItem("grid_0")).flag == true){
-			    if(!epBrowser.nodeGridFlag) gridGraphSwitch(ctrl.select("#layer_arrangement_switch_g"), true);
-			    epBrowser.nodeGridFlag = true;
-			    epBrowser.entryNodeIndex = JSON.parse(localStorage.getItem("grid_0")).index;
-			}else{
-			    epBrowser.nodeGridFlag = false;
-			}
-			epBrowser.endpoint = localStorage.getItem("endpoint_0");
-			param = JSON.parse(localStorage.getItem("param_0"));
-			epBrowser.hidePopupInputDiv(renderDiv);
-			// reset node-edge connection
-			epBrowser.graphData.edges.forEach(edge => {
-			    edge.source = edge.source.id;
-			    edge.target = edge.target.id;
-			    });
-			epBrowser.forcegraph(renderDiv, param);
-		    });
+		for(let i = 0; i < 5; i++){
+		    ul.append("li").attr("class", "nodemenu").text("save states: " + i)
+			.on("click", function(){
+			    localStorage.setItem("states_save",  "1");
+			    localStorage.setItem("states_" + i, JSON.stringify({param: param, endpoint: epBrowser.endpoint, graphData: epBrowser.graphData, nodeGridFlag: epBrowser.nodeGridFlag, entryNodeIndex: epBrowser.entryNodeIndex}));
+			    epBrowser.hidePopupInputDiv(renderDiv);
+			});
+		}
+	    }).on("mouseover", function(){
+		d3.select(this).select("rect").attr("fill", "#86b9d9");
+		d3.select(this).select("text").attr("fill", "#ffffff");
+	    }).on("mouseout", function(){
+		d3.select(this).select("rect").attr("fill", "none");
+		  d3.select(this).select("text").attr("fill", "#666666");
 	    });
-	g.append("rect").attr("x", 825).attr("y", 3).attr("width", 60).attr("height", "18").attr("fill", "none").attr("stroke", "#888888");
-	g.append("text").attr("x", 830).attr("y", 12).attr("fill", "#666666")
-	    .attr("dominant-baseline", "middle").style("font-size", "16px").text("states");
+	save_g.append("rect").attr("x", 758).attr("y", 0).attr("rx", "10").attr("ry", "10")
+	    .attr("width", 60).attr("height", "20").attr("fill", "none").attr("stroke", "#666666");
+	save_g.append("text").attr("x", 788).attr("y", 12).attr("fill", "#666666")
+	    .attr("dominant-baseline", "middle").attr("text-anchor", "middle").style("font-size", "16px").text("save");
+	//// load
+	let load_g = box.append("g").attr("id", "load_states_g").attr("class", "states_button").style("cursor", "pointer")
+	    .on("click", function(){
+		d3.event.preventDefault();
+		epBrowser.hidePopupInputDiv(renderDiv);
+		let popup = renderDiv.select("#var_name_form").style("display", "block");
+		epBrowser.setPopupPosition(renderDiv, popup, this);
+		let popdiv = popup.append("div").attr("class", "nodemenu").attr("id", "menu_ul");
+		let ul = popdiv.append("ul").attr("class", "nodemenu");
+		for(let i = 0; i < 5; i++){
+		    ul.append("li").attr("class",  function(){
+			if(localStorage.getItem("states_" + i)) return "nodemenu";
+			else return "nodemenu_off";
+		    }).text("load states: " + i)
+			.filter(function(){ return localStorage.getItem("states_" + i); })
+			.on("click", function(){
+			    let loadStates = JSON.parse(localStorage.getItem("states_" + i));
+			    epBrowser.graphData = loadStates.graphData;
+			    if(loadStates.nodeGridFlag == true){
+				if(!epBrowser.nodeGridFlag) gridGraphSwitch(ctrl.select("#layer_arrangement_switch_g"), true);
+				epBrowser.nodeGridFlag = true;
+				epBrowser.entryNodeIndex = loadStates.entryNodeIndex;
+			    }else{
+				epBrowser.nodeGridFlag = false;
+			    }
+			    epBrowser.endpoint = loadStates.endpoint;
+			    param = loadStates.param;
+			    epBrowser.hidePopupInputDiv(renderDiv);
+			    // reset node-edge connection
+			    epBrowser.graphData.edges.forEach(edge => {
+				edge.source = edge.source.id;
+				edge.target = edge.target.id;
+			    });
+			    epBrowser.forcegraph(renderDiv, param);
+			});
+		}
+	    }).on("mouseover", function(){
+		d3.select(this).select("rect").attr("fill", "#86b9d9");
+		d3.select(this).select("text").attr("fill", "#ffffff");
+	    }).on("mouseout", function(){
+		d3.select(this).select("rect").attr("fill", "none");
+		d3.select(this).select("text").attr("fill", "#666666");
+	    });
+	load_g.append("rect").attr("x", 825).attr("y", 0).attr("rx", "10").attr("ry", "10")
+	    .attr("width", 60).attr("height", "20").attr("fill", "none").attr("stroke", "#666666");
+	load_g.append("text").attr("x", 855).attr("y", 12).attr("fill", "#666666")
+	    .attr("dominant-baseline", "middle").attr("text-anchor", "middle").style("font-size", "16px").text("load");
     },
 
     showSameTypeNodes: function(api_json, renderDiv, param){
