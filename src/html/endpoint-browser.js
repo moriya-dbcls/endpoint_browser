@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.4.2
+// version: 0.4.3
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-    version: "0.4.2",
+    version: "0.4.3",
     api: "//localhost:3000/api/",
     api_orig: "https://sparql-support.dbcls.jp/rest/api/",
     getLinksApi: "endpoint_browser_links",
@@ -1173,7 +1173,7 @@ var epBrowser = epBrowser || {
 	    let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 		.attr("size", "20").style("border", "solid 3px #888888")
 		.on("keydown", function(){
-		    let var_name = this.value.replace(/[_\s]+/g, "_");
+		    let var_name = this.value.replace(/[^\w]+/g, "_");
 		    if(d3.event.key === 'Enter' && var_name && var_name.match(/\w+/)){
 			var_name = var_name.toLowerCase();
 			if(!var_name.match(/^\?/)) var_name = "?" + var_name;
@@ -1502,7 +1502,7 @@ var epBrowser = epBrowser || {
 			let input = varNameDiv.append("input").attr("id", "var_name").attr("type", "text")
 			    .attr("size", "20").style("border", "solid 3px #888888")
 			    .on("keypress", function(){
-				let var_name = this.value.replace(/[_\s]+/g, "_");
+				let var_name = this.value.replace(/[^\w]+/g, "_");
 				if(d3.event.key === 'Enter' && var_name && !var_name.match(/^\?$/) && !var_name.match(/^\?*node_\d+$/)){
 				    var_name = var_name.toLowerCase();
 				    if(!var_name.match(/^\?/)) var_name = "?" + var_name;
@@ -2178,15 +2178,6 @@ var epBrowser = epBrowser || {
 		changeMode(g, text);
 	    }
 	});
-
-	// change save data  remove later (2020/10/15)
-	if( localStorage.getItem("states_save") == "1" && localStorage.getItem("param_0")){
-	    let tmpData = JSON.parse(localStorage.getItem("states_0"));
-	    localStorage.setItem("states_0", JSON.stringify({endpoint: localStorage.getItem("endpoint_0"), graphData: JSON.parse(localStorage.getItem("states_0")), param:  JSON.parse(localStorage.getItem("param_0")), nodeGridFlag: JSON.parse(localStorage.getItem("grid_0")).flag, entryNodeIndex: JSON.parse(localStorage.getItem("grid_0")).index}));
-	    localStorage.removeItem("grid_0");
-	    localStorage.removeItem("endpoint_0");
-	    localStorage.removeItem("param_0");    
-	}
 	
 	// save/load states
 	//// save
@@ -2475,7 +2466,7 @@ var epBrowser = epBrowser || {
 		    if(json[0].c_label){
 			elm.class_label = json[0].c_label.value;
 			elm.class_label_type = json[0].c_label.type;
-			elm.sparql_suggest_var_name = "?" + elm.class_label.replace(/ /g, "_").toLowerCase();
+			elm.sparql_suggest_var_name = "?" + elm.class_label.replace(/[^\w]/g, "_").toLowerCase();
 			if(elm.type == "bnode") elm.sparql_suggest_var_name += "_bnode";
 		    }
 		    if(elm.sparql_var_name) hub_var_name = elm.sparql_var_name.replace(/^\?/, "");
@@ -2550,12 +2541,12 @@ var epBrowser = epBrowser || {
 	    }
 	    // suggest var name
 	    let suggest_var_name = false;
-	    if(obj.class_label && obj.class != "http://www.w3.org/2002/07/owl#Class") suggest_var_name = obj.class_label.replace(/\s/g, "_"); //class label
+	    if(obj.class_label && obj.class != "http://www.w3.org/2002/07/owl#Class") suggest_var_name = obj.class_label.replace(/[^\w]/g, "_"); //class label
 	    else if(obj.key.match(/identifiers.org/)) suggest_var_name = obj.key.match(/identifiers.org\/([^\/]+)/)[1]; // identifiers.org type
 	    else if(hub_var_name && obj.predicate == "http://www.w3.org/2000/01/rdf-schema#label") suggest_var_name = hub_var_name.toLowerCase() + "_label"; // _label
 	  //  else if(hub_var_name && obj.predicate == "http://purl.org/dc/terms/identifier") suggest_var_name = hub_var_name.toLowerCase() + "_id"; // _id
 	    else if(hub_var_name && obj.predicate.match(/http:\/\/purl.org\/dc\/terms\/./)) suggest_var_name = hub_var_name.toLowerCase() + "_" + obj.predicate.match(/http:\/\/purl.org\/dc\/terms\/(.+)/)[1]; // dcterms
-	    else if(hub_type == "bnode" && hub_class_label) suggest_var_name = hub_class_label.toLowerCase().replace(/\s/g, "_"); // before blank class label (?)
+	    else if(hub_type == "bnode" && hub_class_label) suggest_var_name = hub_class_label.toLowerCase().replace(/[^\w]/g, "_"); // before blank class label (?)
 	    if(suggest_var_name && obj.type == "bnode") suggest_var_name += "_bnode";  // blank
 	    if(suggest_var_name) obj.sparql_suggest_var_name = "?" + suggest_var_name.toLowerCase();
 
