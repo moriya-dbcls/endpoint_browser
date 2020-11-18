@@ -86,6 +86,7 @@ WHERE {
     ?p rdfs:label ?p_label .
   }
 }
+GROUP BY ?s ?p ?c ?c_label ?p_label
 ORDER BY ?p
 {{add_code.limit}}
 ```
@@ -131,6 +132,7 @@ WHERE {
     ?o rdfs:label ?o_label .
   }
 }
+GROUP BY ?s ?o ?o_label
 ORDER BY DESC(?c)
 LIMIT {{limit}}
 ```
