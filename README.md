@@ -4,7 +4,7 @@
 ![alt](https://sparql-support.dbcls.jp/file/ep_browser.png)
 
 # For local usage
-* for private loocalhost-endpoint ([Endpoint browser](https://sparql-support.dbcls.jp/endpoint-browser.html) service page is only available for open access endpoints.)
+* For private loocalhost-endpoint ([Endpoint browser](https://sparql-support.dbcls.jp/endpoint-browser.html) service page is only available for open access endpoints.)
 
 ## A. Run Endpoint browser via Docker
 
@@ -35,7 +35,7 @@ Stop containers
 
 ## B. Install Endpoint browser to local
 
-* req. [SPARQList](https://github.com/dbcls/sparqlist) and [togostanza](https://github.com/togostanza/ts)
+* Req. [SPARQList](https://github.com/dbcls/sparqlist) and [togostanza](https://github.com/togostanza/ts)
 
 ```
     $ git clone https://github.com/moriya-dbcls/endpoint_browser.git
@@ -63,8 +63,8 @@ v12.x by [nodebre](https://github.com/hokaccha/nodebrew)
     $ cd ..
 ```
 
-### togostanza
-download binary from [ts release](https://github.com/togostanza/ts/releases) and set a path to 'ts' file
+### Togostanza
+Download binary from [ts release](https://github.com/togostanza/ts/releases) and set a path to 'ts' file
 
 ```
     $ curl -OL https://github.com/togostanza/ts/releases/download/v0.0.19/ts_0.0.19_linux_amd64.tar.gz
@@ -72,15 +72,15 @@ download binary from [ts release](https://github.com/togostanza/ts/releases) and
     [set a path to 'ts']
 ```
 
-### endpoint browser
-#### move files
+### Endpoint browser
+#### Move files
 
 ```
     $ mv src/sparqlist/*.md sparqlist/repository/
     $ mv src/html sparqlist/public/
 ```
 
-#### start SPARQList
+#### Start SPARQList
 
 ```
     $ cd sparqlist
@@ -88,18 +88,18 @@ download binary from [ts release](https://github.com/togostanza/ts/releases) and
     $ cd ..
 ```
 
-#### start ts
+#### Start ts
 
 ```
     $ cd ts
     $ ts server &
 ```
 
-#### start endpoint browser
+#### Start endpoint browser
 http://localhost:3000/html/
 
 ## Opt.
-hard-coded port num and directory name
+Hard-coded port num and directory name
 
 ```
     ts/endpoint-browser/_header.html:2 src="//localhost:3000/html/endpoint-browser.js"
