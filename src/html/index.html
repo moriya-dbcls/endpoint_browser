@@ -150,11 +150,11 @@
 	<div id="stanza"></div>
 	<div id="start">
 	  <ul>
-	    <li>endpoint<br><input type="text" size="100" id="endpoint"></li>
-	    <li>start node<br> <input type="text" size="100" id="entry"></li>
-	    <li><span style="color: #4886ad; cursor: pointer; font-size: 12px;" onclick="switchOption();">&lt;option&gt;</span></li>
-	    <li id="options_1" style="display: none;">graphs<br><input type="text" size="100" id="graphs"></li>
-	    <li id="options_2" style="display: none;"><span style="font-size: 12px;"> limit of edge type: <input type="text" id="limit" size="5" value="50">, <input type="checkbox" id="inv" value="1"> start from inverse-edge</span></li>
+	    <li>Endpoint<br><input type="text" size="100" id="endpoint"></li>
+	    <li>Start node<br> <input type="text" size="100" id="entry"></li>
+	    <li><span style="color: #4886ad; cursor: pointer; font-size: 12px;" onclick="switchOption();">&lt;Option&gt;</span></li>
+	    <li id="options_1" style="display: none;">Graphs<br><input type="text" size="100" id="graphs"></li>
+	    <li id="options_2" style="display: none;"><span style="font-size: 12px;"> Limit of edge type: <input type="text" id="limit" size="5" value="50">, <input type="checkbox" id="inv" value="1"> Start from inverse-edge</span></li>
 	  </ul>
 	  <input type="button" value="start" onclick="startSparqlSupportGui();">
 	  <br>
@@ -185,7 +185,7 @@
 	  if(entry && endpoint.match(/^https*:\/\//)){
 	      let limit = document.getElementById("limit").value;
 	      let inv = document.getElementById("inv").checked;
-	      if(!entry.match(/^https*:\/\/.+/)) inv = true;
+	      if(!entry.match(/^https*:\/\/.+/) && !entry.match(/^urn:\w+:/) && !entry.match(/^ftp:/) && !entry.match(/^mailto:/)) inv = true;
 	      let stanzaDiv = document.getElementById("stanza");
 	      document.getElementById("start").style.display = "none";
 	      let stanza =  document.createElement('togostanza-endpoint-browser');
