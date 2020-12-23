@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.4.4
+// version: 0.4.5
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-  version: "0.4.4",
+  version: "0.4.5",
   api: "//localhost:3000/api/",
   api_orig: "https://sparql-support.dbcls.jp/rest/api/",
   getLinksApi: "endpoint_browser_links",
@@ -1827,9 +1827,9 @@ var epBrowser = epBrowser || {
       let g = box.append("g").attr("id", id + "_mode_switch_g").attr("class", "mode_switch").style("cursor", "pointer")
 	  .on("click", function(){
 	    if((epBrowser.clickableFlag || (!epBrowser.clickableFlag && epBrowser.outerEp == undefined))
-	       && !(epBrowser.subgraphMode && text == "subgraph to SPARQL")
-	       && !(epBrowser.nodeRemoveMode && text == "remove node")
-	       && !((!epBrowser.subgraphMode && !epBrowser.nodeRemoveMode) && text == "browsing")
+	       && !(epBrowser.subgraphMode && text == "Subgraph to SPARQL")
+	       && !(epBrowser.nodeRemoveMode && text == "Remove node")
+	       && !((!epBrowser.subgraphMode && !epBrowser.nodeRemoveMode) && text == "Browsing")
 	      ){
 	      epBrowser.clickableFlag = true;
 	      changeMode(g, text);
