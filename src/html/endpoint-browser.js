@@ -1885,8 +1885,8 @@ var epBrowser = epBrowser || {
       epBrowser.nodeRemoveMode = false;
       epBrowser.outerEpFlag = false;
 
-      if(text == "subgraph to SPARQL") epBrowser.subgraphMode = true;
-      if(text == "remove node") epBrowser.nodeRemoveMode = true;
+      if(text == "Subgraph to SPARQL") epBrowser.subgraphMode = true;
+      if(text == "Remove node") epBrowser.nodeRemoveMode = true;
       
       reDrawGraph();
       changeModeSwitchColor(g, true);
