@@ -32,7 +32,7 @@
   inv = parseInt(inv);
   let code = "";
   if(entry.match(/^https*:\/\/.+/) || entry.match(/^urn:\w+:/) || entry.match(/^ftp:/) || entry.match(/^mailto:/)) entry = "<" + entry + ">";
-  else if(!entry.match(/^["'].+["']$/) && !entry.match(/^["'].+["']@\w+$/)) entry = '"' + entry + '"';
+  else if(!entry.match(/^["'].+["']$/) && !entry.match(/^["'].+["']@\w+$/) && !entry.match(/^["'].+["']\^\^xsd:\w+$/)) entry = '"' + entry + '"';
   if(parseInt(bnode) == 0){
     code = "  VALUES ?s { " + entry + " }\n";
     if(inv != 1) code += "  ?s ?p ?o .";
@@ -69,6 +69,7 @@
 
 ```sparql
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 SELECT DISTINCT ?s ?p ?c ?c_label (SAMPLE(?o) AS ?o_sample) (COUNT(?o) AS ?o_count) ?p_label
 {{add_code.graph}}
 WHERE {
