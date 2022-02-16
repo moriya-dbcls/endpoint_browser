@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.4.5
+// version: 0.4.6
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -532,14 +532,14 @@ var epBrowser = epBrowser || {
 	if(d.type == "uri") {
 	  dtype = "URI";
 	}else if(d.type != "literal") {
-	  if(d.datatype.match("http://www.w3.org/2001/XMLSchema")){
+	  if(d.datatype && d.datatype.match("http://www.w3.org/2001/XMLSchema")){
 	    dtype = d.datatype.replace("http://www.w3.org/2001/XMLSchema#", "");
 	    if(dtype == "string") dtype = "String";
 	    else if(dtype == "integer") dtype = "Integer";
 	    else if(dtype == "boolean") dtype = "Boolean";
 	    else if(dtype == "hexBinary") dtype = "HexBin";
 	    else if(dtype == "base64Binary") dtype = "Base64";
-	  }else{
+	  } else if (d.datatype) {
 	    dtype = d.datatype.match(/.+[\/#:]([^\/#:]*)$/)[1];
 	  }
 	}
