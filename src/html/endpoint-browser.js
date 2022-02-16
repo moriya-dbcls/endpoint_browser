@@ -2260,7 +2260,7 @@ var epBrowser = epBrowser || {
   showSameTypeNodes: function(api_json, renderDiv, param){
     epBrowser.clickableFlag = true;
     let popup = renderDiv.select("#var_name_form").html("").style("display", "block");
-    let popdiv = popup.append("div").attr("class", "nodemenu");
+    let popdiv = popup.append("div").attr("class", "nodemenu").attr("id", "menu_ul");
     let ul = popdiv.append("ul").attr("class", "nodemenu");
     ul.append("li").attr("class", "nodemenu").text("expand all nodes")
       .on("click", function(){
