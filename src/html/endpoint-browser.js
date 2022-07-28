@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.4.6
+// version: 0.4.9
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-  version: "0.4.5",
+  version: "0.4.9",
   api: "//localhost:3000/api/",
   api_orig: "https://sparql-support.dbcls.jp/rest/api/",
   getLinksApi: "endpoint_browser_links",
@@ -297,7 +297,7 @@ var epBrowser = epBrowser || {
     
     // start loding anime counter
     setInterval(function(){epBrowser.loading.count();}, 300);
-
+    
     // get graph data from API
     let url = epBrowser.api + epBrowser.getLinksApi;
     epBrowser.fetchReq("post", url, renderDiv, param, epBrowser.initGraph);
@@ -305,7 +305,7 @@ var epBrowser = epBrowser || {
   
   initGraph: function(api_json, renderDiv, param){
     let json = api_json.data;
-
+    
     // init graph and force simulation
     epBrowser.graphData = {nodes: [], edges: []};
     epBrowser.simulation = d3.forceSimulation(epBrowser.graphData.nodes);
@@ -351,6 +351,9 @@ var epBrowser = epBrowser || {
 
     // mk prefix for entry
     if(json[0].s.value.match(/^https*:\/\/.+/)) epBrowser.uriToShort(json[0].s.value, false, false, renderDiv, param);
+
+    // adapt the localStorage parameter
+    if (localStorage['epBrowser_nodeGridFlag'] == "true") epBrowser.nodeGridFlag = true;
     
     //// add data
     epBrowser.clickableFlag = true;
@@ -359,7 +362,7 @@ var epBrowser = epBrowser || {
   },
 
   updateGraph: function(api_json, renderDiv, param){
-    //	console.log(api_json);
+    //  console.log(api_json);
     epBrowser.clickableFlag = true;
     if(epBrowser.inverseFlag){
       epBrowser.inverseFlag = false;
@@ -404,6 +407,7 @@ var epBrowser = epBrowser || {
     //	console.log(data);
     
     svg.select("#popup_mouse_event_label").attr("display", "none");
+    renderDiv.select("#var_name_form").style("display", "none");
     
     // add
     edge_g = edge_g.data(data.edges, function(d) { return d.id; });
@@ -822,10 +826,10 @@ var epBrowser = epBrowser || {
 	  }
 	}
 	ul.append("li").attr("class", function(){
-	  if(d.type != "class" && d.type != "bnode" && !d.child_count && (d.sample_count > 1 || bnode_sample_count > 1)) return "nodemenu";
+	  if(d.type != "class" && d.type != "bnode" && (d.sample_count > 1 || bnode_sample_count > 1)) return "nodemenu"; //&& !d.child_count
 	  else return "nodemenu_off";
 	}).text("show same-class nodes")
-	  .filter(function(){ return d.type != "class" && d.type != "bnode" && !d.child_count && (d.sample_count > 1 || bnode_sample_count > 1); })
+	  .filter(function(){ return d.type != "class" && d.type != "bnode" && (d.sample_count > 1 || bnode_sample_count > 1); }) //&& !d.child_count
 	  .on("click", function(){
 	    if(epBrowser.clickableFlag == true){
 	      epBrowser.clickableFlag = false;
@@ -878,18 +882,28 @@ var epBrowser = epBrowser || {
     // node drag
     function dragstarted(d) {
       if(!d3.event.active) simulation.alphaTarget(0.3).restart();
-      if(!epBrowser.nodeGridFlag) d.fx = d.x;
+      d.fx = d.x;
       d.fy = d.y;
+      d.fl = d.layer;
     }
     
     function dragged(d) {
       if(!epBrowser.nodeGridFlag) d.fx = d3.event.x;
+      else {
+	if (d3.event.x - d.fx > 190) {
+	  d.layer = d.fl + parseInt((d3.event.x - d.fx - 190) / 360) + 1;
+	} else if (d.fx - d3.event.x > 190) {
+	  d.layer = d.fl - parseInt((d.fx - d3.event.x - 190) / 360) - 1;
+	} else {
+	  d.layer = d.fl;
+	}
+      }
       d.fy = d3.event.y;
     }
     
     function dragended(d) {
       if (!d3.event.active) simulation.alphaTarget(0);
-      if(!epBrowser.nodeGridFlag) d.fx = null;
+      d.fx = null;
       d.fy = null;
     }
 
@@ -917,8 +931,8 @@ var epBrowser = epBrowser || {
     });
     for(let i = 0; i < keys.length; i++){ // custom prefix
       if(epBrowser.prefixTemp[keys[i]]){
-	let uri =  "<span class='rdf_conf_prefix rdf_conf_custom_prefix' alt='" + epBrowser.prefixTemp[keys[i]] + "'>" + keys[i] + "</span>:";
-	if(keys[i].match(/^p\d+$/)) uri = "<span class='rdf_conf_prefix' alt='" + epBrowser.prefixTemp[keys[i]] + "'>" + keys[i] + "</span>:";
+	let uri =  "<span class='rdf_conf_prefix rdf_conf_custom_prefix' prefix_uri='" + epBrowser.prefixTemp[keys[i]] + "'>" + keys[i] + "</span>:";
+	if(keys[i].match(/^p\d+$/)) uri = "<span class='rdf_conf_prefix' prefix_uri='" + epBrowser.prefixTemp[keys[i]] + "'>" + keys[i] + "</span>:";
 	rdfConfPrefix.push( uri + " &lt;" + epBrowser.prefixTemp[keys[i]] + "&gt;");
       }
     }
@@ -933,8 +947,10 @@ var epBrowser = epBrowser || {
       .filter(function(){ if(!this.classList.contains("rdf_conf_comment")) this.id = "rdf_conf_index_" + rdfConfIndex++; });
 
     //// rdf config model
-    let getRdfConfVarName = function(node, pre_object_name, subject){
-      if(node.pref_id){
+    let getRdfConfVarName = function(node, pre_object_name, subject, subject_name_flag){
+      let postfix = "";
+      if (node.pref_id) {
+	postfix = node.id;
 	for(let i in data.nodes){
 	  if(data.nodes[i].id == node.pref_id){
 	    node = data.nodes[i];
@@ -942,15 +958,28 @@ var epBrowser = epBrowser || {
 	  }
 	}
       }
+      if (postfix) {
+	let count = 0;
+	for(let i in data.nodes){
+	  if (data.nodes[i].pref_id && data.nodes[i].pref_id == node.id) {
+	    count++;
+	    if (data.nodes[i].id == postfix) {
+	      postfix = "_" + count;
+	      break;
+	    }
+	  }
+	}
+      }	  
       let var_name = "node_" + node.id;
       if(node.sparql_var_name) var_name = node.sparql_var_name.replace(/^\?/, "");
       else{ // var name suggestion
 	if(node.sparql_suggest_var_name) var_name = node.sparql_suggest_var_name.replace(/^\?/, "");
 	if(!var_name.match(/^[Nn]ode_\d+$/)) epBrowser.sparqlVars[var_name] = 1;
       }
-      if(var_name.match(/^[Nn]ode_\d+$/)) var_name = "<span class='rdf_conf_node_name' alt='" + node.id + "'>" + var_name + "</span>";
-      else if(node.sparql_var_name) var_name = "<span class='rdf_conf_node_name rdf_conf_custom_node_name' alt='" + node.id + "'>" + var_name + "</span>";
-      else var_name = "<span class='rdf_conf_node_name rdf_conf_suggest_node_name' alt='" + node.id + "'>" + var_name + "</span>";
+      let var_name_post  = (subject_name_flag ? var_name : var_name + postfix);
+      if(var_name.match(/^[Nn]ode_\d+$/)) var_name = "<span class='rdf_conf_node_name' node_id='" + node.id + "' var_name='" + var_name + "'>" + var_name_post + "</span>";
+      else if(node.sparql_var_name) var_name = "<span class='rdf_conf_node_name rdf_conf_custom_node_name' node_id='" + node.id + "' var_name='" + var_name + "'>" + var_name_post + "</span>";
+      else var_name = "<span class='rdf_conf_node_name rdf_conf_suggest_node_name' node_id='" + node.id + "' var_name='" + var_name + "'>" + var_name_post + "</span>";
       return var_name;
     }
 
@@ -1018,9 +1047,9 @@ var epBrowser = epBrowser || {
 	  if(predicate.match(/[:_]\d{2,}$/) && node.predicate_label) predicate_label = " <span class='rdf_conf_comment'># " + node.predicate_label + "</span>";
 	  if(!data.nodes[i-1] || node.subject_id != data.nodes[i-1].subject_id || node.predicate != data.nodes[i-1].predicate){
 	    //	config += indent + "- " + predicate + cardinality + ":" + predicate_label;
-	    //	config += " <span class='rdf_conf_cardinality' alt='" + node.id + "_" + cardinality_f + "'> cardinality </span>\n";
+	    //	config += " <span class='rdf_conf_cardinality' node_id='" + node.id + "' predicate_cardinality='" + cardinality_f + "'> cardinality </span>\n";
 	    let tmp = predicate.match(/(.+):([^\<\>]+)/);
-	    config += indent + "- " + tmp[1] + ":<span class='rdf_conf_cardinality' alt='" + node.id + "_" + cardinality_f + "'>" + tmp[2] + "</span>" + cardinality + ":" + predicate_label + "\n";
+	    config += indent + "- " + tmp[1] + ":<span class='rdf_conf_cardinality' node_id='" + node.id + "' predicate_cardinality='" + cardinality_f + "'>" + tmp[2] + "</span>" + cardinality + ":" + predicate_label + "\n";
 	  }
 	  if(node.type == "uri"){
 	    config += indent + "  - " + object + ": ";
@@ -1031,9 +1060,9 @@ var epBrowser = epBrowser || {
 	    //else config += short_object_uri + object_label + "\n";
 	    if(node.rdf_conf_subject == undefined){
 	      let tmp = short_object_uri.match(/^(.*):([^:]*)$/);
-	      short_object_uri = tmp[1] + ":<span class='rdf_conf_new_subject' alt='" + node.id + "_" + i + "'>" + tmp[2] + "</span>";
+	      short_object_uri = tmp[1] + ":<span class='rdf_conf_new_subject' node_id='" + node.id + "' node_order='" + i + "'>" + tmp[2] + "</span>";
 	    }else if(node.rdf_conf_subject == 1){
-	      let tmp = object.match(/^(<span.+>)(.+)(<\/span>)$/);
+	      let tmp = getRdfConfVarName(node, pre_object_name, subject, 1).match(/^(<span.+>)(.+)(<\/span>)$/);
 	      //  short_object_uri = tmp[1] + snakeToCamel(tmp[2]) + tmp[3];  // clickable
 	      short_object_uri = snakeToCamel(tmp[2]);  // not clickable
 	    }
@@ -1041,7 +1070,7 @@ var epBrowser = epBrowser || {
 	  }else if(node.type.match("literal")){
 	    let literal = node.key;
 	    if(node.type == "literal" || node.datatype.match(/#string$/)) literal = '"' + literal + '"';
-	    config += indent + "  - " + object + ": <span class='rdf_conf_literal' alt='" + node.id + "_" + i + "'>" + literal + "</span>\n";
+	    config += indent + "  - " + object + ": <span class='rdf_conf_literal' node_id='" + node.id + "' node_order='" + i + "'>" + literal + "</span>\n";
 	  }else if(node.type == "bnode"){
 	    config += indent + "  - []:\n";
 	    config += getRdfConfClass(node, indent + "  ");
@@ -1049,9 +1078,9 @@ var epBrowser = epBrowser || {
 	    if(object_name.match(/^node_\d+$/) || object_name == pre_object_name) object_name = undefined;
 	    let tmp = getRdfConfLeafObject(node.id, nest + 1, object_name, false);
 	    if(tmp){
-	      if(!node.off_click[epBrowser.endpoint]) tmp = tmp.replace(/\n$/, " <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand blank node}}</span>\n");
+	      if(!node.off_click[epBrowser.endpoint]) tmp = tmp.replace(/\n$/, " <span class='rdf_conf_clickable' node_id='" + node.id + "' nodee_order='" + i + "'>{{expand blank node}}</span>\n");
 	      config += tmp;
-	    }else config += indent + "    - " + object + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand blank node}}</span>\n";
+	    }else config += indent + "    - " + object + ": <span class='rdf_conf_clickable' node_id='" + node.id + "' node_order='" + i + "'>{{expand blank node}}</span>\n";
 	  }
 	}
       }
@@ -1077,7 +1106,7 @@ var epBrowser = epBrowser || {
 	ids.push(id);
 	rdfConf[id] = "- " + subject;
 	if(node.off_click[epBrowser.endpoint]) rdfConf[id] += " " + epBrowser.uriToShort(node.key, false, 1, renderDiv, param) + ":\n";
-	else rdfConf[id] += " " + epBrowser.uriToShort(node.key, false, 1, renderDiv, param) + ": <span class='rdf_conf_clickable' alt='" + node.id + "_" + i + "'>{{expand subject}}</span>\n";
+	else rdfConf[id] += " " + epBrowser.uriToShort(node.key, false, 1, renderDiv, param) + ": <span class='rdf_conf_clickable' node_id='" + node.id + "' node_order='" + i + "'>{{expand subject}}</span>\n";
 	rdfConf[id] += getRdfConfClass(node, "");
 	//	}
 	let leaf = getRdfConfLeafObject(id, 0, false, snake_subject);
@@ -1101,10 +1130,11 @@ var epBrowser = epBrowser || {
     renderDiv.selectAll(".rdf_conf_comment").style("color", "darkgoldenrod");
     ////// expand rdf
     let expandRdf = (element) => {
-      let tmp = d3.select(element).attr("alt").split("_");
+      let id = d3.select(element).attr("node_id");
+      let order = d3.select(element).attr("node_order");
       let element_id = element.id;
       epBrowser.rdfConfRenderFlag = false;
-      renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + tmp[0]).on("click")(data.nodes[tmp[1]]);
+      renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + id).on("click")(data.nodes[order]);
       let renderTimer;
       let focusElement = () => {
 	if(epBrowser.rdfConfRenderFlag){
@@ -1160,8 +1190,8 @@ var epBrowser = epBrowser || {
       });
     ////// edit var name
     let editVarName = (element) => {
-      let node_name_tmp = d3.select(element).text();
-      let id = d3.select(element).attr("alt");
+      let node_name_tmp = d3.select(element).attr("var_name");
+      let id = d3.select(element).attr("node_id");
       let varNameDiv = renderDiv.select("#var_name_form");
       if(varNameDiv.style("display") == "block"){
 	varNameDiv.style("display", "none");
@@ -1200,10 +1230,9 @@ var epBrowser = epBrowser || {
       });
     ////// edit cardinality
     let editCardinality = (element) => {
-      let tmp = d3.select(element).attr("alt").split("_");
+      let id = d3.select(element).attr("node_id");
+      let flag = d3.select(element).attr("predicate_cardinality");
       let predicate = d3.select(element).text();
-      let id = tmp[0];
-      let flag = tmp[1];
       let cardDiv = renderDiv.select("#rdf_conf_card_div");
       if(cardDiv.style("display") == "block"){
 	cardDiv.style("display", "none");
@@ -1248,7 +1277,7 @@ var epBrowser = epBrowser || {
       });
     ////// set new subject
     let setNewSubject = (element) => {
-      let id = d3.select(element).attr("alt").split("_")[0];
+      let id = d3.select(element).attr("node_id");
       let cardDiv = renderDiv.select("#rdf_conf_card_div");
       if(cardDiv.style("display") == "block"){
 	cardDiv.style("display", "none");
@@ -1265,12 +1294,17 @@ var epBrowser = epBrowser || {
       select.on("change", function(d){
 	let value = this.value;
 	if(value == 1){
+	  let node_id;
 	  for(let i in data.nodes){
 	    if(data.nodes[i].id == id){
-	      data.nodes[i].rdf_conf_subject = value;
+	      node_id = (data.nodes[i].pref_id ? data.nodes[i].pref_id : i);
+	      data.nodes[node_id].rdf_conf_subject = value;
 	      break;
 	    }
 	  }
+	  for(let i in data.nodes){
+	    if(data.nodes[i].pref_id && data.nodes[i].pref_id == node_id) data.nodes[i].rdf_conf_subject = value;
+	  }	
 	}
 	cardDiv.style("display", "none");
 	let element_id = element.id;
@@ -1291,17 +1325,19 @@ var epBrowser = epBrowser || {
       }).on("keydown", function(){
 	if(d3.event.key === 'Enter') setNewSubject(this);
       }).on("contextmenu", function(){
-	let tmp = d3.select(this).attr("alt").split("_");
+	let id = d3.select(this).attr("node_id");
+	let order = d3.select(this).attr("node_order");
 	epBrowser.setPopupPosition(renderDiv, renderDiv.select("#var_name_form"), this);
-	renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + tmp[0]).on("contextmenu")(data.nodes[tmp[1]]);
+	renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + id).on("contextmenu")(data.nodes[order]);
       });
     ////// literal right click
     renderDiv.selectAll(".rdf_conf_literal").attr("tabindex", "0")
       .style("cursor", "pointer")
       .on("contextmenu", function(){
-	let tmp = d3.select(this).attr("alt").split("_");
+	let id = d3.select(this).attr("node_id");
+	let order = d3.select(this).attr("node_order");
 	epBrowser.setPopupPosition(renderDiv, renderDiv.select("#var_name_form"), this);
-	renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + tmp[0]).on("contextmenu")(data.nodes[tmp[1]]);
+	renderDiv.select("#epBrowser_svg").select("#node_mouse_eve_g_" + id).on("contextmenu")(data.nodes[order]);
       });	
     renderDiv.selectAll(".rdf_conf_custom_prefix").style("color", "#1680c4");
     renderDiv.selectAll(".rdf_conf_custom_node_name").style("color", "#1680c4");
@@ -1354,6 +1390,7 @@ var epBrowser = epBrowser || {
     
     // element position
     function ticked() {
+      if (!epBrowser.entryNodeIndex.x) epBrowser.entryNodeIndex.x = 0;
       // edge
       edge.attr("d", function(d){
 	if(epBrowser.nodeGridFlag){
@@ -1369,7 +1406,7 @@ var epBrowser = epBrowser || {
 	.attr("y", function(d) { return epBrowser.calcEdgeLabelPos(d.source.x, d.source.y, d.target.x, d.target.y, "y", d.has_reverse, d.from_inverse); });
       // node
       node_g.attr("transform", function(d) {
-	if(epBrowser.nodeGridFlag) d.x = d.layer * 360 + epBrowser.entryNodeIndex.x;
+	if (epBrowser.nodeGridFlag) d.x = d.layer * 360 +  epBrowser.entryNodeIndex.x;
 	return "translate(" + d.x + "," + d.y + ")";
       });
     }
@@ -1812,6 +1849,10 @@ var epBrowser = epBrowser || {
     ctrl.append("circle").attr("id", "slider").attr("fill", "#86b9d9").attr("r", "10px").attr("cx", "130px").attr("cy", "41px").style("cursor", "pointer")
       .call(d3.drag()
 	    .on("drag", dragged));
+
+    // load parameter
+    if (localStorage['epBrowser_nodeGridFlag'] == "true") changeSwitchColor(ctrl.select("#layer_arrangement_switch_g"), true);
+    if (localStorage['epBrowser_labelFlag'] == "false") propertySwitch(ctrl.select("#property_switch_g"), true); // (rev.) display/hide = false/true
     
     function dragged() {
       let cx = d3.event.x;
@@ -1977,16 +2018,17 @@ var epBrowser = epBrowser || {
       changeSwitchColor(g, flag);
       if(flag){
 	epBrowser.labelFlag = false;
+	localStorage['epBrowser_labelFlag'] = false;
 	epBrowser.labelModeFlag = (epBrowser.labelModeFlag + 1) % 2;
 	svg.selectAll(".edge_label").attr("display", "block");
 	svg.selectAll(".edge_label_bd").attr("display", "block");
-	reDrawGraph();
       }else{
 	epBrowser.labelFlag = true;
+	localStorage['epBrowser_labelFlag'] = true;
 	svg.selectAll(".edge_label").attr("display", "none");
 	svg.selectAll(".edge_label_bg").attr("display", "none");
-	reDrawGraph();
       }
+      if(epBrowser.graphData) reDrawGraph();
     }
     
     function prefixListSwitch(g, flag){
@@ -2035,9 +2077,11 @@ var epBrowser = epBrowser || {
 	epBrowser.hidePopupInputDiv(renderDiv);
 	epBrowser.entryNodeIndex = {x: epBrowser.graphData.nodes[0].x, y:epBrowser.graphData.nodes[0].y};
 	epBrowser.nodeGridFlag = true;
+	localStorage['epBrowser_nodeGridFlag'] = true;
 	forceSwitch(box.select("#force_sim__switch_g"), true);
       }else{
 	epBrowser.nodeGridFlag = false;
+	localStorage['epBrowser_nodeGridFlag'] = false;
 	forceSwitch(box.select("#force_sim__switch_g"), true);
       }
       chageGraphTypeFlag = false;
@@ -2268,13 +2312,28 @@ var epBrowser = epBrowser || {
 	epBrowser.forcegraph(renderDiv, param);
 	epBrowser.hidePopupInputDiv(renderDiv);
       });
+    let hasChildNode = false;
+    let preText = "change to ";
+    for (let node of epBrowser.graphData.nodes) {
+      if (node.id == epBrowser.selectNode) {
+	if (node.child_count > 0) {
+	  hasChildNode = true;
+	  preText = "";
+	}
+	break;
+      }
+    }
     for(let uri of api_json.data){
-      ul.append("li").attr("class", "nodemenu").text(epBrowser.uriToShort(uri, false, false, renderDiv, param))
-	.attr("alt", uri)
+      ul.append("li").attr("class", function(){
+	if (hasChildNode) return "nodemenu_off";
+	else return "nodemenu";
+      }).text(preText + epBrowser.uriToShort(uri, false, false, renderDiv, param))
+	.attr("prefix_uri", uri)
+	.filter(function(){ return hasChildNode == false; })
 	.on("click", function(){
 	  for(let node of epBrowser.graphData.nodes){
 	    if(node.id == epBrowser.selectNode){
-	      node.key = d3.select(this).attr("alt");
+	      node.key = d3.select(this).attr("prefix_uri");
 	      epBrowser.forcegraph(renderDiv, param);
 	      epBrowser.hidePopupInputDiv(renderDiv);
 	      break;
@@ -2335,6 +2394,8 @@ var epBrowser = epBrowser || {
       let rate = rect_w / rect_h;
       let w = x2 - x1;
       let h = y2 - y1;
+      if (w == 0) w = 0.00001; // set any delta if 0
+      if (h == 0) h = 0.00001;
       let sign_x = w / Math.abs(w);
       let sign_y = h / Math.abs(h);
       if(Math.abs(h) * rate > Math.abs(w)){
@@ -2869,8 +2930,8 @@ var epBrowser = epBrowser || {
 	  else{
 	    uri = uri.replace(epBrowser.prefix[key], prefix + ":");
 	    if(config){
-	      if(epBrowser.prefixTemp[prefix] && prefix.match(/^p\d+/)) uri = uri.replace(prefix + ":", "<span class='rdf_conf_prefix' alt='" + epBrowser.prefixTemp[prefix] + "'>" + prefix + "</span>:");
-	      else if(epBrowser.prefixTemp[prefix]) uri = uri.replace(prefix + ":", "<span class='rdf_conf_prefix rdf_conf_custom_prefix' alt='" + epBrowser.prefixTemp[prefix] + "'>" + prefix + "</span>:");
+	      if(epBrowser.prefixTemp[prefix] && prefix.match(/^p\d+/)) uri = uri.replace(prefix + ":", "<span class='rdf_conf_prefix' prefix_uri='" + epBrowser.prefixTemp[prefix] + "'>" + prefix + "</span>:");
+	      else if(epBrowser.prefixTemp[prefix]) uri = uri.replace(prefix + ":", "<span class='rdf_conf_prefix rdf_conf_custom_prefix' prefix_uri='" + epBrowser.prefixTemp[prefix] + "'>" + prefix + "</span>:");
 	    }
 	  }
 	  f = 1;
