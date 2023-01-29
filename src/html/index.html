@@ -182,10 +182,11 @@
 	  let endpoint = document.getElementById("endpoint").value;
 	  let entry = document.getElementById("entry").value;
 	  let graphs = document.getElementById("graphs").value;
+	  endpoint = endpoint.replace(/\s/g, '');
 	  if(entry && endpoint.match(/^https*:\/\//)){
 	      let limit = document.getElementById("limit").value;
 	      let inv = document.getElementById("inv").checked;
-	      if(!entry.match(/^https*:\/\/.+/) && !entry.match(/^urn:\w+:/) && !entry.match(/^ftp:/) && !entry.match(/^mailto:/)) inv = true;
+              if(!entry.match(/^\s*https*:\/\/.+/) && !entry.match(/^\s*urn:\w+:/) && !entry.match(/^\s*ftp:/) && !entry.match(/^\s*mailto:/)) inv = true;
 	      let stanzaDiv = document.getElementById("stanza");
 	      document.getElementById("start").style.display = "none";
 	      let stanza =  document.createElement('togostanza-endpoint-browser');
@@ -208,7 +209,7 @@
 	      document.getElementById("options_2").style.display = "none";
 	  }else if(f == 2){
 	      document.getElementById("endpoint").value = "https://db-dev.jpostdb.org/proxy/sparql";
-	      document.getElementById("entry").value = "http://rdf.jpostdb.org/entry/PRT810_1_Q9NYF8";
+	      document.getElementById("entry").value = "http://rdf.jpostdb.org/entry/PRT1631_1_Q9NYF8";
 	      document.getElementById("graphs").value = "http://jpost.org/graph/database, http://jpost.org/graph/ontology";
 	      document.getElementById("options_1").style.display = "block";
 	      document.getElementById("options_2").style.display = "block";

@@ -31,7 +31,7 @@
 ({entry, limit, inv, bnode, b_p, b_t, graphs})=>{
   inv = parseInt(inv);
   let code = "";
-  if(entry.match(/^https*:\/\/.+/) || entry.match(/^urn:\w+:/) || entry.match(/^ftp:/) || entry.match(/^mailto:/)) entry = "<" + entry + ">";
+  if(entry.match(/^\s*https*:\/\/.+/) || entry.match(/^\s*urn:\w+:/) || entry.match(/^\s*ftp:/) || entry.match(/^\s*mailto:/)) entry = "<" + entry.replace(/ /g, '') + ">";
   else if(!entry.match(/^["'].+["']$/) && !entry.match(/^["'].+["']@\w+$/) && !entry.match(/^["'].+["']\^\^xsd:\w+$/)) entry = '"' + entry + '"';
   if(parseInt(bnode) == 0){
     code = "  VALUES ?s { " + entry + " }\n";
@@ -57,6 +57,7 @@
       if(uri.match(/^https*:\/\/.+/)) graph_code += "FROM <" + uri + ">\n";
     }
   }
+
   return {subject: code, limit: limit_code, graph: graph_code};
 };
 ```
@@ -70,7 +71,7 @@
 ```sparql
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-SELECT DISTINCT ?s ?p ?c ?c_label (SAMPLE(?o) AS ?o_sample) (COUNT(?o) AS ?o_count) ?p_label
+SELECT DISTINCT ?s ?p ?c ?c_label (SAMPLE(?o) AS ?o_sample) (COUNT(?o) AS ?o_count) (SAMPLE(?p_label_pre) AS ?p_label)
 {{add_code.graph}}
 WHERE {
 {{add_code.subject}}
@@ -84,8 +85,9 @@ WHERE {
     ?o rdfs:label ?o_label .
   }
   OPTIONAL {
-    ?p rdfs:label ?p_label .
+    ?p rdfs:label ?p_label_pre .
   }
+  FILTER (LANG(?p_label_pre) = 'en' OR LANG(?p_label_pre) = '') 
 }
 GROUP BY ?s ?p ?c ?c_label ?p_label
 ORDER BY ?p
