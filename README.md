@@ -12,6 +12,11 @@
 
 -   [Docker](https://docs.docker.com/get-docker/)
 -   [Docker-compose](https://docs.docker.com/compose/install/)
+  - On M1 Mac: add '--platform=linux/amd64' FROM line of the Dockerfile.
+
+``` 
+FROM --platform=linux/amd64 node:12
+```
 
 ### Usage
 
