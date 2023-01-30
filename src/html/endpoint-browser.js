@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.4.9
+// version: 0.5.1
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,12 +7,13 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-  version: "0.4.9",
+  version: "0.5.0",
   api: "//localhost:3000/api/",
   api_orig: "https://sparql-support.dbcls.jp/rest/api/",
   getLinksApi: "endpoint_browser_links",
   findEndpointApi: "find_endpoint_from_uri",
   findSameTypeNodes: "find_same_type_nodes",
+  configCardinality: "config_cardinality_fuzzy",
   debug: false,
   clickableFlag: true,
   labelFlag: true,
@@ -382,7 +383,8 @@ var epBrowser = epBrowser || {
 	  param.apiArg.splice(i, 1);
 	  break;
 	}
-      }param.apiArg.push("inv=1");
+      }
+      param.apiArg.push("inv=1");
       epBrowser.outerEpFlag = true;
       let url = epBrowser.api + epBrowser.getLinksApi;
       epBrowser.fetchReq("post", url, renderDiv, param, epBrowser.updateGraph);
@@ -1026,19 +1028,19 @@ var epBrowser = epBrowser || {
 	if(node.subject_id == id){
 	  if(node.predicate == epBrowser.rdfType || node.predicate.match(/^inv-http/)) continue;
 	  let object = getRdfConfVarName(node, pre_object_name, subject);
-	  let cardinality = "";
+	  let cardinality = node.cardinality;
 	  let cardinality_f = 0;
 	  for(let j in data.edges){
 	    if(data.edges[j].id == node.predicate_id){
 	      if(data.edges[j].count > 1){
-		cardinality = "+";
+	//	cardinality = "+";
 		cardinality_f = 1;
 	      }
 	      break;
 	    }
 	  }
 	  if(data.nodes[i+1]  && node.subject_id == data.nodes[i+1].subject_id && node.predicate == data.nodes[i+1].predicate){
-	    cardinality = "+";
+	 //   cardinality = "+";
 	    cardinality_f = 1;
 	  }
 	  if(node.cardinality != undefined) cardinality = node.cardinality;
@@ -2492,7 +2494,7 @@ var epBrowser = epBrowser || {
   },
   
   addGraphData: function(api_json, renderDiv, param){
-    //	 console.log(api_json);
+    //console.log(api_json);
     let json = api_json.data;
 
     if(!json[0]) return 0;
@@ -2514,6 +2516,16 @@ var epBrowser = epBrowser || {
     // hub node check (+1 for each edge push)
     let hub_node = epBrowser.graphData.nodes[epBrowser.selectNode];
     if(hub_node && !hub_node.child_count) hub_node.child_count = 0;
+
+    // class
+    let subjectClass = "";
+    for (let i in json) {
+      if (json[i].p.value == epBrowser.rdfType) {
+	subjectClass = json[i].c.value;
+	break;
+      }
+    }
+      
 
     // replace type label of select node (for multi type)
     let hub_var_name = false;
@@ -2583,7 +2595,8 @@ var epBrowser = epBrowser || {
 	child_count: 0,
 	off_click: {},
 	off_click_inv: {},
-	sample_count: json[i].o_count.value
+	sample_count: json[i].o_count.value,
+	cardinality: ""
       };
       if(json[i].o_sample.datatype) obj.datatype = json[i].o_sample.datatype;
       if(json[i].o_label) obj.label = json[i].o_label.value;
@@ -2610,7 +2623,21 @@ var epBrowser = epBrowser || {
       else if(hub_type == "bnode" && hub_class_label) suggest_var_name = hub_class_label.toLowerCase().replace(/[^\w]/g, "_"); // before blank class label (?)
       if(suggest_var_name && obj.type == "bnode") suggest_var_name += "_bnode";  // blank
       if(suggest_var_name) obj.sparql_suggest_var_name = "?" + suggest_var_name.toLowerCase();
-
+      
+      // suggest cardinality
+      if (obj.predicate != epBrowser.rdfType) {
+	let param = {
+	  apiArg: [
+	    "endpoint=" + encodeURIComponent(epBrowser.endpoint),
+	    "subject_class=" + encodeURIComponent(subjectClass),
+	    "predicate=" + encodeURIComponent(obj.predicate),
+	    "id=" + nodeId
+	  ]
+	};
+	let url = epBrowser.api + epBrowser.configCardinality;
+	epBrowser.fetchReq("post", url, renderDiv, param, epBrowser.addCardinality);
+      }
+      
       let source = epBrowser.selectNode;
       let target = nodeId;
       if(inverse){
@@ -2801,6 +2828,12 @@ var epBrowser = epBrowser || {
     json.unshift({id: "-- select endpoint"});
     epBrowser.endpointList[decodeURIComponent(tmp[1])] = json;
   },
+
+  addCardinality: function(json, renderDiv, param){
+    let cardinality = json.cardinality.replace(/f /, "");
+    epBrowser.graphData.nodes[json.id].cardinality = cardinality;
+    epBrowser.makeRdfConfig(renderDiv, epBrowser.param, data);
+  },
   
   removeGraphData: function(renderDiv, param, clickData){
     let removeReverseFlag = function(source, target, reverse){
@@ -2890,6 +2923,7 @@ var epBrowser = epBrowser || {
     //	console.log(newData);
     
     if(newData.nodes[0]) epBrowser.graphData = newData;
+    epBrowser.makeRdfConfig(renderDiv, epBrowser.param, newData);
   },
   
   nodeColorType: function(type, p, endpoint){
