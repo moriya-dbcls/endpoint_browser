@@ -521,7 +521,7 @@ var epBrowser = epBrowser || {
 	.attr("id", function(d) { return d.id; })
 	.attr("rx", "6px").attr("ry", "6px")   // for iOS browser
 	.attr("class", function(d){
-	  d.node_type = epBrowser.nodeColorType(d.type, d.predicate, d.endpoint);
+	  if (!d.node_type) d.node_type = epBrowser.nodeColorType(d.type, d.predicate, d.endpoint);
 	  return "node node_" + d.node_type;
 	});
 
@@ -2497,7 +2497,10 @@ var epBrowser = epBrowser || {
     //console.log(api_json);
     let json = api_json.data;
 
-    if(!json[0]) return 0;
+    if (!json[0]) {
+      epBrowser.graphData.nodes[epBrowser.selectNode].node_type = "leaf_uri";
+      return 0;
+    }
     
     let inverse = false;
     if(api_json.inv == 1) inverse = true;
@@ -2832,7 +2835,7 @@ var epBrowser = epBrowser || {
   addCardinality: function(json, renderDiv, param){
     let cardinality = json.cardinality.replace(/f /, "");
     epBrowser.graphData.nodes[json.id].cardinality = cardinality;
-    epBrowser.makeRdfConfig(renderDiv, epBrowser.param, data);
+    epBrowser.makeRdfConfig(renderDiv, epBrowser.param,  epBrowser.graphData);
   },
   
   removeGraphData: function(renderDiv, param, clickData){
