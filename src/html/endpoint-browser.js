@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-  version: "0.5.0",
+  version: "0.5.1",
   api: "//localhost:3000/api/",
   api_orig: "https://sparql-support.dbcls.jp/rest/api/",
   getLinksApi: "endpoint_browser_links",
