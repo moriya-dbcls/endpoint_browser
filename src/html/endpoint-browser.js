@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.5.1
+// version: 0.5.2
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-  version: "0.5.1",
+  version: "0.5.2",
   api: "//localhost:3000/api/",
   api_orig: "https://sparql-support.dbcls.jp/rest/api/",
   getLinksApi: "endpoint_browser_links",
@@ -33,7 +33,8 @@ var epBrowser = epBrowser || {
     //console.log(url);
     //console.log(param.apiArg);
     let gid, svg, hc, loadingTimer;
-    if(renderDiv){
+    let rgxp = new RegExp(epBrowser.getLinksApi);
+    if(renderDiv && url.match(rgxp)){
       [gid, svg, hc] = epBrowser.loading.append(renderDiv, param);
       loadingTimer = setInterval(function(){epBrowser.loading.anime(svg, gid, hc);}, 300);
     }
@@ -2182,16 +2183,16 @@ var epBrowser = epBrowser || {
       if(flag){
 	if(e.key == "r" || e.key == "s" || e.key == "b"){ // mode change
 	  let text = false;
-	  if(e.key == "b") text = "browsing";
-	  else if(e.key == "s") text = "subgraph to SPARQL";
-	  else if(e.key == "r") text = "remove node";
-	  let id = text.replace(/[^\w]/g, "_").replace(/\./g, "_");
+	  if(e.key == "b") text = "Browsing";
+	  else if(e.key == "s") text = "Subgraph to SPARQL";
+	  else if(e.key == "r") text = "Remove node";
+	  let id = text.toLowerCase().replace(/[^\w]/g, "_").replace(/\./g, "_");
 	  let g = svg.select("#" + id + "_mode_switch_g");
 	  
 	  if(!e.ctrlKey){
-	    if(epBrowser.subgraphMode) epBrowser.preModeText = "subgraph to SPARQL";
-	    else if(epBrowser.nodeRemoveMode) epBrowser.preModeText = "remove node";
-	    else epBrowser.preModeText = "browsing";
+	    if(epBrowser.subgraphMode) epBrowser.preModeText = "Subgraph to SPARQL";
+	    else if(epBrowser.nodeRemoveMode) epBrowser.preModeText = "Remove node";
+	    else epBrowser.preModeText = "Browsing";
 	    if(text != epBrowser.preModeText){
 	      epBrowser.keyPressFlag = true;
 	      changeMode(g, text);
@@ -2199,7 +2200,7 @@ var epBrowser = epBrowser || {
 	  }else changeMode(g, text);
 	}else if(e.ctrlKey){  // optional mode
 	  if(opt.style("display") == "none"){
-	    changeMode(svg.select("#browsing_mode_switch_g"), "browsing");
+	    changeMode(svg.select("#browsing_mode_switch_g"), "Browsing");
 	    opt.style("display", "block");
 	    ctrl.attr("transform", "translate(0,56)");
 	  }
