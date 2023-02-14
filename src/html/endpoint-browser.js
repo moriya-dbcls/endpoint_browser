@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.5.2
+// version: 0.5.3
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -33,8 +33,9 @@ var epBrowser = epBrowser || {
     //console.log(url);
     //console.log(param.apiArg);
     let gid, svg, hc, loadingTimer;
-    let rgxp = new RegExp(epBrowser.getLinksApi);
-    if(renderDiv && url.match(rgxp)){
+    let rgxp1 = new RegExp(epBrowser.getLinksApi);
+    let rgxp2 = new RegExp(epBrowser.findSameTypeNodes);
+    if(renderDiv && (url.match(rgxp1) || url.match(rgxp2))){
       [gid, svg, hc] = epBrowser.loading.append(renderDiv, param);
       loadingTimer = setInterval(function(){epBrowser.loading.anime(svg, gid, hc);}, 300);
     }
@@ -2327,10 +2328,12 @@ var epBrowser = epBrowser || {
       }
     }
     for(let uri of api_json.data){
+      let string = epBrowser.uriToShort(uri, false, false, renderDiv, param);
+      if(!uri.match(/(.+[\/#:])([^\/#:]*)$/)) string = uri; // uri check
       ul.append("li").attr("class", function(){
 	if (hasChildNode) return "nodemenu_off";
 	else return "nodemenu";
-      }).text(preText + epBrowser.uriToShort(uri, false, false, renderDiv, param))
+      }).text(preText + string)
 	.attr("prefix_uri", uri)
 	.filter(function(){ return hasChildNode == false; })
 	.on("click", function(){
