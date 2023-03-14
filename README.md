@@ -1,7 +1,3 @@
----
-title: ENdpoint browser
----
-
 # Endpoint browser
 [Endpoint browser](https://sparql-support.dbcls.jp/endpoint-browser.html) is a web service to search RDF data in the endpoint using visualised network graph. User can select nodes and execute SPARQL queries from the GUI.
 
