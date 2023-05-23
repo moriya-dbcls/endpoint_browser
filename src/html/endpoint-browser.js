@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.5.3
+// version: 0.5.4
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -35,7 +35,9 @@ var epBrowser = epBrowser || {
     let gid, svg, hc, loadingTimer;
     let rgxp1 = new RegExp(epBrowser.getLinksApi);
     let rgxp2 = new RegExp(epBrowser.findSameTypeNodes);
+    let loadingFlag = false;
     if(renderDiv && (url.match(rgxp1) || url.match(rgxp2))){
+      loadingFlag = true;
       [gid, svg, hc] = epBrowser.loading.append(renderDiv, param);
       loadingTimer = setInterval(function(){epBrowser.loading.anime(svg, gid, hc);}, 300);
     }
@@ -63,14 +65,14 @@ var epBrowser = epBrowser || {
 	else return false;
       });
       res.then(function(json){
-	if(renderDiv) epBrowser.loading.remove(svg, gid, param, json);
+	if(loadingFlag) epBrowser.loading.remove(svg, gid, param, json);
 	if(json) callback(json, renderDiv, param);
-	if(renderDiv) clearInterval(loadingTimer);
+	if(loadingFlag) clearInterval(loadingTimer);
       });
     }catch(error){
       console.log(error);
-      if(renderDiv) clearInterval(loadingTimer);
-      if(renderDiv) epBrowser.loading.error(svg, gid, width / 2);
+      if(loadingFlag) clearInterval(loadingTimer);
+      if(loadingFlag) epBrowser.loading.error(svg, gid, width / 2);
     }
   },
 
