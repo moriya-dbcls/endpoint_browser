@@ -236,6 +236,20 @@
 	  }
       }
 
+      function saveToLocalStorage() {
+	  let ep_input = document.getElementById("endpoint");
+	  let entry_input = document.getElementById("entry");
+	  localStorage[location.pathname + "_endpoint"] = ep_input.value;
+	  localStorage[location.pathname + "_entry"] = entry_input.value;
+      }
+      
+      let ep_input = document.getElementById("endpoint");
+      let entry_input  = document.getElementById("entry");
+      if (localStorage[location.pathname + "_endpoint"]) ep_input.value = localStorage[location.pathname + "_endpoint"];
+      if (localStorage[location.pathname + "_entry"]) entry_input.value = localStorage[location.pathname + "_entry"];
+      ep_input.addEventListener("change", e => { saveToLocalStorage(); })
+      entry_input.addEventListener("change", e => { saveToLocalStorage(); })
+
       document.addEventListener("keydown", e => {
 	  if(!document.getElementById("endpoint-browser-stanza") && e.key === 'Enter') startSparqlSupportGui()
       });

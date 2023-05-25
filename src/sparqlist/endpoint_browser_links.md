@@ -171,7 +171,7 @@ LIMIT {{limit}}
 ## `return`
 
 ```javascript
-({subject, links, types, label, inv, add_code})=>{
+({subject, links, types, label, inv})=>{
   let list = label.results.bindings;
   let object2label = [];
   for(let i in list){
@@ -196,7 +196,7 @@ LIMIT {{limit}}
   ////////
   
   let s = subject.results.bindings[0].s;
-  if (add_code.multi_subject) s = {type: "uri", value: "http://dummy.uri/dummy_multi_node"}
+//  if (add_code.multi_subject) s = {type: "uri", value: "http://dummy.uri/dummy_multi_node"}
   for(elm of json){
     let obj = {s: s, p: type_p, o_sample: elm.o, c: elm.o, o_count: type_o_count};
     if(elm.o_label) obj['c_label'] = elm.o_label;
