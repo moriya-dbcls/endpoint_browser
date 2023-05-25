@@ -141,7 +141,7 @@
   </head>
   <body>
     <div id="head">
-     <a href="./sparql-support.html" id="logolink"><img src="https://sparql-support.dbcls.jp/file/endpoint-browser_logo.png" height="70" id="logo"></a> 
+     <a href="https://sparql-support.dbcls.jp/sparql-support.html#endpoint_browser" id="logolink"><img src="https://sparql-support.dbcls.jp/file/endpoint-browser_logo.png" height="70" id="logo"></a> 
      <h1><a href="" onclick="location.reload();return false" class="title">Endpoint browser</a> <span style="color:#ffcccc">local</dev></h1>
     </div>
     <div id="main">
@@ -154,7 +154,7 @@
 	    <li>Start node<br> <input type="text" size="100" id="entry"></li>
 	    <li><span style="color: #4886ad; cursor: pointer; font-size: 12px;" onclick="switchOption();">&lt;Option&gt;</span></li>
 	    <li id="options_1" style="display: none;">Graphs<br><input type="text" size="100" id="graphs"></li>
-	    <li id="options_2" style="display: none;"><span style="font-size: 12px;"> Limit of edge type: <input type="text" id="limit" size="5" value="50">, <input type="checkbox" id="inv" value="1"> Start from inverse-edge</span></li>
+	    <li id="options_2" style="display: none;"><span style="font-size: 12px;"> Limit of edge type: <input type="text" id="limit" size="5" value="100">, <input type="checkbox" id="inv" value="1"> Start from inverse-edge</span></li>
 	  </ul>
 	  <input type="button" value="start" onclick="startSparqlSupportGui();">
 	  <br>
@@ -186,7 +186,7 @@
 	  if(entry && endpoint.match(/^https*:\/\//)){
 	      let limit = document.getElementById("limit").value;
 	      let inv = document.getElementById("inv").checked;
-              if(!entry.match(/^\s*https*:\/\/.+/) && !entry.match(/^\s*urn:\w+:/) && !entry.match(/^\s*ftp:/) && !entry.match(/^\s*mailto:/)) inv = true;
+	      if(!entry.match(/^\s*https*:\/\/.+/) && !entry.match(/^\s*urn:\w+:/) && !entry.match(/^\s*ftp:/) && !entry.match(/^\s*mailto:/) && !entry.match(/^\s*a:/) && !entry.match(/^\s*class:/)) inv = true;
 	      let stanzaDiv = document.getElementById("stanza");
 	      document.getElementById("start").style.display = "none";
 	      let stanza =  document.createElement('togostanza-endpoint-browser');
@@ -241,9 +241,26 @@
       });
 
       if(window.navigator.languages && window.navigator.languages[0] == "ja"){
-	  document.getElementById("reflink").href = "./sparql-support_j.html#endpoint_browser";
-	  document.getElementById("logolink").href = "./sparql-support_j.html";
+	  document.getElementById("reflink").href = "https://sparql-support.dbcls.jp/sparql-support_j.html#endpoint_browser";
+	  document.getElementById("logolink").href = "https://sparql-support.dbcls.jp/sparql-support_j.html";
       }
+
+      let exec = false;
+      let pair = location.search.substring(1).split('&');
+      for(let i = 0; pair[i]; i++) {
+          let keyVal = pair[i].split('=');
+          if (keyVal[0] == "endpoint") {
+              document.getElementById("endpoint").value = decodeURIComponent(keyVal[1]);
+          } else if (keyVal[0] == "node") {
+              document.getElementById("entry").value = decodeURIComponent(keyVal[1]);
+          } else if (keyVal[0] == "limit") {
+              document.getElementById("limit").value = keyVal[1];
+          } else if (keyVal[0] == "exec" && keyVal[1] == "1") {
+              exec = true;
+          }
+      }
+      if (exec) startSparqlSupportGui();
+
 -->
     </script>
 

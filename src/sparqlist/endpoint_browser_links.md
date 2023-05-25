@@ -31,10 +31,25 @@
 ({entry, limit, inv, bnode, b_p, b_t, graphs})=>{
   inv = parseInt(inv);
   let code = "";
-  if(entry.match(/^\s*https*:\/\/.+/) || entry.match(/^\s*urn:\w+:/) || entry.match(/^\s*ftp:/) || entry.match(/^\s*mailto:/)) entry = "<" + entry.replace(/ /g, '') + ">";
-  else if(!entry.match(/^["'].+["']$/) && !entry.match(/^["'].+["']@\w+$/) && !entry.match(/^["'].+["']\^\^xsd:\w+$/)) entry = '"' + entry + '"';
+  let class_flag = false;
+  let multi_subject = false;
+  if (entry.match(/^\s*https*:\/\/.+/) || entry.match(/^\s*urn:\w+:/) || entry.match(/^\s*ftp:/) || entry.match(/^\s*mailto:/)) {
+    let nodes = entry.split(/,/);
+    entry = "";
+    for (const node of nodes) {
+      entry += "<" + node.replace(/ /g, '') + "> ";
+    }
+    if (nodes.length > 1) multi_subject = true;
+  } else if (entry.match(/^\s*a:https*:\/\/.+/) || entry.match(/^\s*class:https*:\/\/.+/)) {
+    class_flag = true;
+    multi_subject = true;
+    entry = "<" + entry.replace(/ /g, '').replace(/^a:/, '').replace(/^class:/, '') + ">";                                                     
+  } else if (!entry.match(/^["'].+["']$/) && !entry.match(/^["'].+["']@\w+$/) && !entry.match(/^["'].+["']\^\^xsd:\w+$/)) {
+    entry = '"' + entry + '"';
+  }
   if(parseInt(bnode) == 0){
-    code = "  VALUES ?s { " + entry + " }\n";
+    if (class_flag) code = "  ?s a " + entry + " .\n";
+    else code = "  VALUES ?s { " + entry + " }\n";
     if(inv != 1) code += "  ?s ?p ?o .";
     else code += "  ?o ?p ?s ." // inverse 
   }else{
@@ -58,7 +73,7 @@
     }
   }
 
-  return {subject: code, limit: limit_code, graph: graph_code};
+  return {subject: code, limit: limit_code, graph: graph_code, multi_subject: multi_subject};
 };
 ```
 
@@ -66,12 +81,25 @@
 
 {{endpoint}}
 
+## `subject`
+
+```sparql
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?s
+{{add_code.graph}}
+WHERE {
+{{add_code.subject}}
+}
+LIMIT 1
+```
+
 ## `links`
 
 ```sparql
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-SELECT DISTINCT ?s ?p ?c ?c_label (SAMPLE(?o) AS ?o_sample) (COUNT(?o) AS ?o_count) (SAMPLE(?p_label_pre) AS ?p_label)
+SELECT DISTINCT ?p ?c ?c_label (SAMPLE(?o) AS ?o_sample) (COUNT(?o) AS ?o_count) (SAMPLE(?p_label_pre) AS ?p_label)
 {{add_code.graph}}
 WHERE {
 {{add_code.subject}}
@@ -89,7 +117,7 @@ WHERE {
   }
   FILTER (LANG(?p_label_pre) = 'en' OR LANG(?p_label_pre) = '') 
 }
-GROUP BY ?s ?p ?c ?c_label ?p_label
+GROUP BY ?p ?c ?c_label ?p_label
 ORDER BY ?p
 {{add_code.limit}}
 ```
@@ -125,7 +153,7 @@ WHERE {
 
 ```sparql
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT DISTINCT ?s ?o ?o_label (COUNT(?x) AS ?c)
+SELECT DISTINCT ?o ?o_label (COUNT(?x) AS ?c)
 {{add_code.graph}}
 WHERE {
 {{add_code.subject}}
@@ -135,7 +163,7 @@ WHERE {
     ?o rdfs:label ?o_label .
   }
 }
-GROUP BY ?s ?o ?o_label
+GROUP BY ?o ?o_label
 ORDER BY DESC(?c)
 LIMIT {{limit}}
 ```
@@ -143,7 +171,7 @@ LIMIT {{limit}}
 ## `return`
 
 ```javascript
-({links, types, label, inv})=>{
+({subject, links, types, label, inv, add_code})=>{
   let list = label.results.bindings;
   let object2label = [];
   for(let i in list){
@@ -167,13 +195,16 @@ LIMIT {{limit}}
   }
   ////////
   
+  let s = subject.results.bindings[0].s;
+  if (add_code.multi_subject) s = {type: "uri", value: "http://dummy.uri/dummy_multi_node"}
   for(elm of json){
-    let obj = {s: elm.s, p: type_p, o_sample: elm.o, c: elm.o, o_count: type_o_count};
+    let obj = {s: s, p: type_p, o_sample: elm.o, c: elm.o, o_count: type_o_count};
     if(elm.o_label) obj['c_label'] = elm.o_label;
     res.push(obj);
   }
   json = links.results.bindings;
   for(elm of json){
+    elm.s = s;
     if(elm.o_sample && object2label[elm.o_sample.value]) elm.o_label = object2label[elm.o_sample.value];
     if(elm.p.value != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type") res.push(elm);
   }
