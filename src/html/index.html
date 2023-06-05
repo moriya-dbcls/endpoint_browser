@@ -200,6 +200,14 @@
 	  }
       }
 
+      function saveToLocalStorage() {
+	  let inputs = ["endpoint", "entry", "graphs"];
+	  for (let id of inputs) {
+	      let input = document.getElementById(id);
+	      localStorage[location.pathname + "_" + id] = input.value;
+	  }
+      }
+
       function setSample(f){
 	  if(f == 1){
 	      document.getElementById("endpoint").value = "http://dev.togogenome.org/sparql";
@@ -221,6 +229,7 @@
 	      document.getElementById("options_1").style.display = "block";
 	      document.getElementById("options_2").style.display = "block";
 	  }
+	  saveToLocalStorage();
       }
 
       function switchOption(){
@@ -236,19 +245,12 @@
 	  }
       }
 
-      function saveToLocalStorage() {
-	  let ep_input = document.getElementById("endpoint");
-	  let entry_input = document.getElementById("entry");
-	  localStorage[location.pathname + "_endpoint"] = ep_input.value;
-	  localStorage[location.pathname + "_entry"] = entry_input.value;
+      let inputs = ["endpoint", "entry", "graphs"];
+      for (let id of inputs) {
+	  let input = document.getElementById(id);
+	  if (localStorage[location.pathname + "_" + id]) input.value = localStorage[location.pathname + "_" + id];
+	  input.addEventListener("change", e => { saveToLocalStorage(); })
       }
-      
-      let ep_input = document.getElementById("endpoint");
-      let entry_input  = document.getElementById("entry");
-      if (localStorage[location.pathname + "_endpoint"]) ep_input.value = localStorage[location.pathname + "_endpoint"];
-      if (localStorage[location.pathname + "_entry"]) entry_input.value = localStorage[location.pathname + "_entry"];
-      ep_input.addEventListener("change", e => { saveToLocalStorage(); })
-      entry_input.addEventListener("change", e => { saveToLocalStorage(); })
 
       document.addEventListener("keydown", e => {
 	  if(!document.getElementById("endpoint-browser-stanza") && e.key === 'Enter') startSparqlSupportGui()
