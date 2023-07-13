@@ -195,7 +195,8 @@ LIMIT {{limit}}
   }
   ////////
   
-  let s = subject.results.bindings[0].s;
+  let s = '';
+  if (subject.results.bindings[0]) s = subject.results.bindings[0].s;
 //  if (add_code.multi_subject) s = {type: "uri", value: "http://dummy.uri/dummy_multi_node"}
   for(elm of json){
     let obj = {s: s, p: type_p, o_sample: elm.o, c: elm.o, o_count: type_o_count};
