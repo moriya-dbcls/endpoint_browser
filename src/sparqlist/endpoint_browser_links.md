@@ -115,9 +115,9 @@ WHERE {
   OPTIONAL {
     ?p rdfs:label ?p_label_pre .
   }
-  FILTER (LANG(?p_label_pre) = 'en' OR LANG(?p_label_pre) = '') 
+  FILTER (LANG(?p_label_pre) = 'en' || LANG(?p_label_pre) = '') 
 }
-GROUP BY ?p ?c ?c_label ?p_label
+GROUP BY ?p ?c ?c_label ?p_label_pre
 ORDER BY ?p
 {{add_code.limit}}
 ```

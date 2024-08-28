@@ -1,5 +1,5 @@
 // name:    SPARQL support: Endpoint browser
-// version: 0.5.4
+// version: 0.5.5
 // https://sparql-support.dbcls.js/
 //
 // Released under the MIT license
@@ -7,7 +7,7 @@
 // Copyright (c) 2019 Yuki Moriya (DBCLS)
 
 var epBrowser = epBrowser || {
-  version: "0.5.2",
+  version: "0.5.5",
   api: "//localhost:3000/api/",
   api_orig: "https://sparql-support.dbcls.jp/rest/api/",
   getLinksApi: "endpoint_browser_links",
@@ -25,7 +25,7 @@ var epBrowser = epBrowser || {
   rdfConfRenderFlag: false,
   prefixCount: 0,
   edgeZoomRate: 1,
-  rdfConfSelectIndex: 0,
+  rdfConfSelect-Index: 0,
   prefixCc404: [],
   blankId: 0,
 
@@ -681,6 +681,12 @@ var epBrowser = epBrowser || {
 	      }else{
 		param.apiArg[i] = 'endpoint=' + encodeURIComponent(epBrowser.endpoint);
 	      }
+	    }else if(param.apiArg[i].match(/^graphs=/)){
+	      if(epBrowser.outerEpFlag){
+		if(epBrowser.outerEp && epBrowser.outerEp.match(/^https*:\/\//)){
+		  param.apiArg[i] = 'graphs=';
+		}
+	      }
 	    }
 	  }
 	  if(endpoint){
@@ -723,7 +729,8 @@ var epBrowser = epBrowser || {
     // identifiers.org && http://purl.
     if(epBrowser.outerEpFlag && epBrowser.outerEp === undefined){
       let federated_g = node_g.filter(function(d){
-	return d.predicate != epBrowser.rdfType && (d.key.match(/http:\/\/identifiers\.org\//) || d.key.match(/http:\/\/purl\./));
+	//return d.predicate != epBrowser.rdfType && (d.key.match(/http:\/\/identifiers\.org\//) || d.key.match(/http:\/\/purl\./));
+	return d.predicate != epBrowser.rdfType && (d.key.match(/http:\/\/identifiers\.org\//));
       })
 	  .append("g")
 	  .attr("class", "select_outer_endpoint")
