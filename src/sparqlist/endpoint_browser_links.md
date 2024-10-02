@@ -31,6 +31,7 @@
 ({entry, limit, inv, bnode, b_p, b_t, graphs})=>{
   inv = parseInt(inv);
   let code = "";
+  let spo_code = "";
   let class_flag = false;
   let multi_subject = false;
   if (entry.match(/^\s*https*:\/\/.+/) || entry.match(/^\s*urn:\w+:/) || entry.match(/^\s*ftp:/) || entry.match(/^\s*mailto:/)) {
@@ -49,9 +50,7 @@
   }
   if(parseInt(bnode) == 0){
     if (class_flag) code = "  ?s a " + entry + " .\n";
-    else code = "  VALUES ?s { " + entry + " }\n";
-    if(inv != 1) code += "  ?s ?p ?o .";
-    else code += "  ?o ?p ?s ." // inverse 
+    else code = "  VALUES ?s { " + entry + " }";
   }else{
     let links = JSON.parse(b_p);
     code = "  {\n    SELECT ?s\n    WHERE {\n";
@@ -60,10 +59,10 @@
     predicates = predicates.replace(/\<inv-http/g, "^<http"); 
     code += "      " + entry + " " + predicates + " ?s .\n";
     if(b_t) code += "      ?s a <" + b_t + "> .\n";
-    code += "    } LIMIT 1\n  }\n";
-    if(inv != 1) code += "  ?s ?p ?o .";
-    else code += "  ?o ?p ?s ." // inverse 
+    code += "    } LIMIT 1\n  }";
   }
+  if(inv != 1) spo_code += "  ?s ?p ?o .";
+  else spo_code += "  ?o ?p ?s ." // inverse 
   let limit_code = "LIMIT " + limit;
   if(limit == 0) limit_code  = "";
   let graph_code = "";
@@ -73,7 +72,7 @@
     }
   }
 
-  return {subject: code, limit: limit_code, graph: graph_code, multi_subject: multi_subject};
+  return {subject: code, spo_code: spo_code, limit: limit_code, graph: graph_code, multi_subject: multi_subject};
 };
 ```
 
@@ -90,6 +89,7 @@ SELECT ?s
 {{add_code.graph}}
 WHERE {
 {{add_code.subject}}
+{{add_code.spo_code}}
 }
 LIMIT 1
 ```
@@ -103,6 +103,7 @@ SELECT DISTINCT ?p ?c ?c_label (SAMPLE(?o) AS ?o_sample) (COUNT(?o) AS ?o_count)
 {{add_code.graph}}
 WHERE {
 {{add_code.subject}}
+{{add_code.spo_code}}
   OPTIONAL {
     ?o a ?c .
     OPTIONAL {
