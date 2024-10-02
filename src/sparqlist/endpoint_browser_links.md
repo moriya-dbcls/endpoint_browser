@@ -115,7 +115,11 @@ WHERE {
   }
   OPTIONAL {
     ?p rdfs:label ?p_label_pre .
-    FILTER (LANG(?p_label_pre) = 'en' || LANG(?p_label_pre) = '') 
+    # for virtuoso
+    # FILTER (LANG(?p_label_pre) = 'en' || LANG(?p_label_pre) = '')
+    # modify for qlever
+    BIND (LANG(?p_label_pre) AS ?lang)
+    FILTER (?lang = "en" || ?lang = "")
   }
 }
 GROUP BY ?p ?c ?c_label ?p_label_pre
